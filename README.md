@@ -48,10 +48,11 @@ $ git clone git@github.com:at1as/Terminal-Chess.git
 
 ### Usage
 ```bash
-$ irb
-$ load 'Board.rb'; a = Board.new; a.setup_board; a.board_refresh
-$ move("A2", "A4")
+$ ./chess.rb
 ```
 
 ### Limitations
-This is an untested work in progress. Check currently requires the King to be moved. i.e., another piece cannot be moved to get the King out of check. This will be fixed shortly.
+* This is an untested work in progress. 
+* Check currently requires the King to be moved. i.e., another piece cannot be moved to get the King out of check. This will be fixed shortly.
+* Checkmate currently requires the user to attempt to move their checkmated king, before being notified they are in checkmate
+* Castling is not supported

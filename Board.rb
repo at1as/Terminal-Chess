@@ -29,9 +29,6 @@ class Board
     ##Subtract king current position from valid positions
     valid_positions -= king_positions
     if !@@checkmate
-      puts "CM??"
-      puts !@@checkmate
-      puts "</CM??"
       if @@player_turn == @@piece_locations[p1]["color"]
         if !check?(@@player_turn) || (@@piece_locations[p1]["color"] == @@player_turn && @@piece_locations[p1]["type"] == "king")
           puts "#{@@player_turn}"
@@ -65,7 +62,7 @@ class Board
 
           puts "\nValid Positions #{valid_positions}"
         else
-          "Your king is in check. Please move the #{@@player_turn} king out of check"
+          puts "Your king is in check. Please move the #{@@player_turn} king out of check"
         end
       else
         puts "It is #{@@player_turn}'s turn. Please move a #{@@player_turn} piece."
