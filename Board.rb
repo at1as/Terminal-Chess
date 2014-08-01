@@ -11,6 +11,7 @@ class Board
 
   def initialize
     @@piece_locations = Hash.new
+    @@piece_locations_buffer = Hash.new
     @@row_mappings = {"A" => 1, "B" => 2, "C" => 3, "D" => 4,
                         "E" => 5, "F" => 6, "G" => 7, "H" => 8}
     @@taken_pieces = []
@@ -28,48 +29,78 @@ class Board
 
     ##Subtract king current position from valid positions
     valid_positions -= king_positions
+
+    # Allow piece movements, unless in checkmate
     if !@@checkmate
+      # Ensure player is moving in turn
       if @@player_turn == @@piece_locations[p1]["color"]
-        if !check?(@@player_turn) || (@@piece_locations[p1]["color"] == @@player_turn && @@piece_locations[p1]["type"] == "king")
-          puts "#{@@player_turn}"
-          puts "#{@@piece_locations[p1]['color']}"
-          puts "#{@@player_turn == @@piece_locations[p1]["color"]}"
-          puts "Checkmate: #{@@checkmate}"
+
+        # If player is not in check (or if htey are, but are moving king, continue)
+        #if !check?(@@player_turn) || (@@piece_locations[p1]["color"] == @@player_turn && @@piece_locations[p1]["type"] == "king")
+
+          # Contain moves within buffer, so they can be dropped if deemed invalid
+          @@piece_locations_buffer = @@piece_locations
+          # Chosen destination is within the list of valid destinations
           if ([p2] - valid_positions).empty?
             @@taken_pieces << @@piece_locations[p2] if !@@piece_locations[p2]["number"].nil?
-            @@piece_locations[p2] = @@piece_locations[p1]
-            @@piece_locations[p2]["moved"] = true
+            @@piece_locations_buffer[p2] = @@piece_locations[p1]
+            @@piece_locations_buffer[p2]["moved"] = true
 
             # Special case for pawn
-            if @@piece_locations[p2]["type"] == "pawn"
+            if @@piece_locations_buffer[p2]["type"] == "pawn"
 
               # If a pawn reaches the end rows of the board, promote it to a new piece
-              if p2 < 9 && @@piece_locations[p2]["color"] == "red"
+              if p2 < 9 && @@piece_locations_buffer[p2]["color"] == "red"
                 promote(p2)
-              elsif p2 > 56 && @@piece_locations[p2]["color"] == "black"
+              elsif p2 > 56 && @@piece_locations_buffer[p2]["color"] == "black"
                 promote(p2)
               end
             end
 
+            # If the current player is not in check at the end of the turn, allow them to proceed
+            if !check?(@@player_turn)
             # Old location of the piece is now cleared
-            @@piece_locations[p1] = {"type" => "  ", "number" => nil, "color" => nil}
+              @@piece_locations_buffer[p1] = {"type" => "  ", "number" => nil, "color" => nil}
+              @@piece_locations = @@piece_locations_buffer
 
-            # Set it to the other player's turn
-            @@player_turn = (["black", "red"] - [@@player_turn]).first
+              # Set it to the other player's turn
+              @@player_turn = (["black", "red"] - [@@player_turn]).first
 
-            board_refresh
+              board_refresh
+            else
+              puts "Please move #{@@player_turn} king out of check to continue"
+            end
+
+
+
+
+          else
+            puts "Please select a valid destination."
           end
-
-          puts "\nValid Positions #{valid_positions}"
-        else
-          puts "Your king is in check. Please move the #{@@player_turn} king out of check"
-        end
+        #else
+        #  puts "The King is in check. Please get the #{@@player_turn} king out of check"
+        #end
       else
         puts "It is #{@@player_turn}'s turn. Please move a #{@@player_turn} piece."
       end
     else
       puts "Checkmate! Game Over."
     end
+  end
+
+  # Return the valid positions for piece at current_pos to move
+  # Return them in human readable format [A-H][1-8]
+  def valid_destinations(current_pos)
+    readable_positions = []
+    manifest = piece_manifest
+    p1 = get_index_from_rowcol(current_pos.to_s)
+    valid_positions = possible_moves(p1, manifest)
+    valid_positions.each do |pos|
+      grid_pos = get_rowcol_from_index(pos)
+      # Map first string character 1-8 to [A-H], for column, and then add second string character as [1-8]
+      readable_positions << (@@row_mappings.key(grid_pos[0].to_i) + grid_pos[1].to_s)
+    end
+    return readable_positions
   end
 
   # Search piece manifest for kings. Remove them from the list of positions returned
@@ -91,16 +122,17 @@ class Board
     puts "Promote to: [Q]ueen, [K]night, [R]ook, [B]ishop"
     promo_piece = gets.chomp.downcase
     if promo_piece == "q" || promo_piece == "queen"
-      @@piece_locations[p1]["type"] = "queen"
+      @@piece_locations_buffer[p1]["type"] = "queen"
     elsif promo_piece == "k" || promo_piece == "knight"
-      @@piece_locations[p1]["type"] = "knight"
+      @@piece_locations_buffer[p1]["type"] = "knight"
     elsif promo_piece == "r" || promo_piece == "rook"
-      @@piece_locations[p1]["type"] = "rook"
+      @@piece_locations_buffer[p1]["type"] = "rook"
     elsif promo_piece == "b" || promo_piece == "bishop"
-      @@piece_locations[p1]["type"] = "bishop"
+      @@piece_locations_buffer[p1]["type"] = "bishop"
     end
   end
 
+  private :promote
 
   # Return whether the player of a specified color has their king currently in check
   # by checking the attack vectors of all the opponents players, versus the king location
@@ -119,8 +151,7 @@ class Board
         king_loc = piece
       end
     end
-    puts "P1: #{king_loc}"
-    puts "PATH: #{path.flatten.uniq}"
+
     danger_vector = path.flatten.uniq
     king_positions = possible_moves(king_loc, manifest)
 
@@ -128,7 +159,10 @@ class Board
     if danger_vector.include? king_loc
       # If all the positions the can move to is also attackable by the opposing player
       if (king_positions - danger_vector).length != 0
-        @@checkmate = true
+        # This is flawed. It verified whether the king could move out check
+        # There are two other cases: whether a piece can remove the enemy
+        # And whether the enemy's attack vector can be blocked
+        #@@checkmate = true
       end
       # Piece is in check
       return true
@@ -151,6 +185,15 @@ class Board
     offset = @@row_mappings[row_col[0]].to_i
     multiplier = row_col[1].to_i - 1
     return multiplier * 8 + offset
+  end
+
+
+  # Convert index (1 - 64) to rowcol notation
+  # (1 to 64) to [A-H][1-8]
+  def get_rowcol_from_index(index)
+    letter = get_col_from_index(index)
+    number = get_row_from_index(index)
+    "#{letter}#{number}"
   end
 
 
@@ -193,6 +236,7 @@ class Board
     return @@piece_locations
   end
 
+  # Not currently used
   def taken_pieces
     return @@taken_pieces
   end
