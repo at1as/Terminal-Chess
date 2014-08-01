@@ -12,13 +12,17 @@ while true
   
   print "\nPiece to Move: "
   from = gets.chomp.upcase
-  print "\nLocation: "
-  to = gets.chomp.upcase
- 
+  
   begin
+    print "Valid destinations: #{a.valid_destinations(from)}"
+  
+    print "\nLocation: "
+    to = gets.chomp.upcase
     a.move(from, to)
+
   rescue
-    puts "Invalid Move. Try again"
+    puts "Invalid selection"
   end
 
 end
+
