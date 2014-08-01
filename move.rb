@@ -208,6 +208,7 @@ module MOVE
   # or until it hits a piece. This can be changed by passing the limit argument
   # For example, the king can only move diagonally 1 position, so it would pass limit=1
   def move_diagonal(index, limit = 8)
+
     row = get_row_from_index(index)
     col = get_col_from_index(index)
     left, right = [col-1, limit].min, [8-col, limit].min
@@ -216,7 +217,7 @@ module MOVE
 
     # up and to the right
     ([up, right, limit].min).times do |i|
-      next_pos = index - i*7
+      next_pos = index - (i+1)*7
       # Valid move if position is unoccupied
       if unoccupied?(next_pos)
         valid << next_pos
@@ -233,7 +234,7 @@ module MOVE
 
     # up and to the left
     ([up, left, limit].min).times do |i|
-      next_pos = index - i*9
+      next_pos = index - (i+1)*9
       if unoccupied?(next_pos)
         valid << next_pos
       else
@@ -246,7 +247,7 @@ module MOVE
 
     # down and to the right
     ([down, right, limit].min).times do |i|
-      next_pos = index + i*9
+      next_pos = index + (i+1)*9
       if unoccupied?(next_pos)
         valid << next_pos
       else
@@ -258,8 +259,8 @@ module MOVE
     end
 
     # down and to the left
-    ([down, right, limit].min).times do |i|
-      next_pos = index + i*7
+    ([down, left, limit].min).times do |i|
+      next_pos = index + (i+1)*7
       if unoccupied?(next_pos)
         valid << next_pos
       else
@@ -273,10 +274,37 @@ module MOVE
     return valid
   end
 
+  # This method is unimplemented and may not work. It neglects requirements such as:
+  # - piece cannot move into check, or through check
+  # - candidates to castle may never have moved
+  def castle(index)
+    # Valid positions for a King to be in order to castle
+    if index == 5 || index == 61
+      # Empty space between a King and a Rook
+      if onoccupied?(index - 1) && unoccupied(index - 2) && unoccupied(index - 3) && @@pieces[index - 4]["type"] == "rook"
+        # The king's castle position
+        return index - 2
+
+      elsif unoccupied?(index + 1) && unoccupied(index + 2) && @@pieces[index + 3]["type"] == "rook"
+        return index + 2
+      end
+    end
+  end
+
 
   # Check if board tile currently has a piece
   def unoccupied?(index)
     if @@pieces[index]["color"].nil?
+      return true
+    else
+      return false
+    end
+  end
+
+
+  # Return true if the piece has moved before
+  def moved?(index)
+    if @@pieces[index]["moved"]
       return true
     else
       return false
