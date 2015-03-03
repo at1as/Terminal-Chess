@@ -1,7 +1,7 @@
 Terminal-Chess
 ==============
 
-A chess game written for terminal in Ruby (output below is colorized when run in the terminal)
+A two-player chess game for the Terminal, written in Ruby (output below is colorized when run in the terminal)
 <pre>
 					>> Welcome to Terminal Chess v0.1.0
 
@@ -41,23 +41,23 @@ Location: c6
 ![Screenshot](http://at1as.github.io/github_repo_assets/terminal_chess.jpg)
 
 ### Requirements
-Requires the colorize Ruby gem
+Requires the colorize Ruby gem (listed in .gemspec file)
 ```bash
 $ sudo gem install colorize
 ```
  
-### Installation
-```bash
-$ git clone git@github.com:at1as/Terminal-Chess.git
-```
- 
 ### Usage
+The easiest way to use terminal_chess is to install it via the [Rubygem](https://rubygems.org/gems/terminal_chess). This is likely to be a few commits behind, but generally more stable.
+
+Otherwise, clone this repo directly and run:
 ```bash 
-$ chmod +x chess.rb
-$ ruby chess.rb
+$ git clone git@github.com:at1as/Terminal-Chess.git
+$ chmod +x lib/terminal_chess.rb
+$ ruby lib/terminal_chess.rb
 ```
 
 ### Limitations
-* Checkmate will need to be verified manually
-* Code cleanup
+* Built and tested on Terminal in OS 10.10
+* For now, checkmate will need to be verified manually
+* TODO: Code cleanup. Printer module is painful to read.
 * Niether player can be automated
