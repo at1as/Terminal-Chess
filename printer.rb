@@ -10,11 +10,12 @@ module PRINTER
 
   # Prints the board to terminal, based on layout defined by piece_locations
   def printer
+    
     # Clear and reset counters
     @@print_count = 1
     system "clear" or system "cls"
 
-    # Print Header (title & column labels)
+    # Header (title & column labels)
     print "\n\t>> Welcome to Terminal Chess v#{VERSION}\n\n\s\s\s"
     COLS.each { |c| print " _#{c}__ " }
     puts "\n"
@@ -66,7 +67,7 @@ module PRINTER
       # Print succeeding row index (1...8) if applicable
       if (@@n == 1 || @@n == 4) && j then print " #{j}" end
 
-      # Incriment row index. Reset once n reaches 6 (i.e., two complete cell rows have been printed.)
+      # Incriment row index. Reset once n reaches 6 (i.e., two complete cell rows have been printed - the pattern to repeat)
       @@n += 1
       if @@n == 6 then @@n = 0 end
       puts ""

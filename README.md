@@ -33,28 +33,31 @@ A chess game written for terminal in Ruby (output below is colorized when run in
      A     B     C     D     E     F     G     H
 
 Piece to Move: B8
-Valid destinations: ["C6", "A6"]
+Valid destinations: C6, A6
 Location: c6
 
 </pre>
+
+![Screenshot](http://at1as.github.io/github_repo_assets/terminal_chess.jpg)
 
 ### Requirements
 Requires the colorize Ruby gem
 ```bash
 $ sudo gem install colorize
 ```
-
+ 
 ### Installation
 ```bash
 $ git clone git@github.com:at1as/Terminal-Chess.git
 ```
-
+ 
 ### Usage
-```bash
-$ ./chess.rb
+```bash 
+$ chmod +x chess.rb
+$ ruby chess.rb
 ```
 
 ### Limitations
-* Checkmate currently requires the user to attempt to move their checkmated king, before being notified they are in checkmate
-* Castling is still a feature in progress
-* There is currently no AI for Player 2
+* Checkmate will need to be verified manually
+* Code cleanup
+* Niether player can be automated

@@ -12,17 +12,18 @@ module MOVE
 
   # Calls methods below to return a list of positions which are valid moves
   # for piece at index p1, given the current board layout as defined in manifest
-  def possible_moves(p1,manifest)
-    allowed = []
-    type = manifest[p1]["type"]
-    my_color = manifest[p1]["color"]
+  def possible_moves(p1, manifest, castling = false)
+    allowed   = []
+    type      = manifest[p1]["type"]
+    my_color  = manifest[p1]["color"]
     constants(manifest, my_color, type)
 
     unless unoccupied?(p1)
 
       if type == "king"
-        allowed += [move_lateral(p1,1)].flatten
-        allowed += [move_diagonal(p1,1)].flatten
+        allowed += [move_lateral(p1, 1)].flatten
+        allowed += [move_diagonal(p1, 1)].flatten
+        allowed += [castle(p1)].flatten if castling
 
       elsif type == "queen"
         allowed += [move_lateral(p1)].flatten
@@ -65,7 +66,7 @@ module MOVE
         valid << (p1 - 9)
       end
       # Only if the pieces is unmoved, can it move forward two rows
-      if !@@pieces[p1]["moved"] && unoccupied?(p1 - 16)
+      if !@@pieces[p1]["moved"] && unoccupied?(p1 - 16) && unoccupied?(p1 - 8)
         valid << (p1 - 16)
       end
     elsif @@color == "black"
@@ -78,7 +79,7 @@ module MOVE
       if piece_color(p1 + 9) == @@enemy_color && col < 8
         valid << (p1 + 9)
       end
-      if !@@pieces[p1]["moved"] && unoccupied?(p1 + 16)
+      if !@@pieces[p1]["moved"] && unoccupied?(p1 + 16) && unoccupied?(p1 + 8)
         valid << (p1 + 16)
       end
     end
@@ -274,21 +275,27 @@ module MOVE
     return valid
   end
 
-  # This method is unimplemented and may not work. It neglects requirements such as:
-  # - piece cannot move into check, or through check
-  # - candidates to castle may never have moved
+  # Castle: king cannot move into check, or through check
   def castle(index)
+    valid = []
+    dangerous_tiles = attack_vectors
+    
     # Valid positions for a King to be in order to castle
     if index == 5 || index == 61
       # Empty space between a King and a Rook
-      if onoccupied?(index - 1) && unoccupied(index - 2) && unoccupied(index - 3) && @@pieces[index - 4]["type"] == "rook"
-        # The king's castle position
-        return index - 2
-
-      elsif unoccupied?(index + 1) && unoccupied(index + 2) && @@pieces[index + 3]["type"] == "rook"
-        return index + 2
+      if unoccupied?(index - 1) && unoccupied?(index - 2) && unoccupied?(index - 3) && @@pieces[index - 4]["moved"] == false 
+        # Ensure king does not move through check or into check
+        if !dangerous_tiles.include?(index - 1) && !dangerous_tiles.include?(index - 2)
+          # King's castle position
+          valid << index - 2
+        end
+      elsif unoccupied?(index + 1) && unoccupied?(index + 2) && @@pieces[index + 3]["moved"] == false
+        if !dangerous_tiles.include?(index + 1) && !dangerous_tiles.include?(index + 2)
+          valid << index + 2
+        end
       end
     end
+    return valid
   end
 
 
