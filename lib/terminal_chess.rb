@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 
-load 'printer.rb'
-load 'move.rb'
-load 'board.rb'
+$LOAD_PATH << '.'
+
+require_relative "terminal_chess/version"
+require_relative "printer.rb"
+require_relative "move.rb"
+require_relative "board.rb"
 
 # Setup
 a = Board.new; a.setup_board; a.board_refresh
