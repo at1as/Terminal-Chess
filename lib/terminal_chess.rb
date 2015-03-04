@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-$LOAD_PATH << '.'
+$LOAD_PATH << './lib/'
 
 require_relative "terminal_chess/version"
 require_relative "printer.rb"

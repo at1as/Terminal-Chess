@@ -16,6 +16,7 @@ Gem::Specification.new do |s|
 
   s.files       = `git ls-files`.split("\n") 
   s.require_paths = ["lib"]
+  s.executables << 'terminal_chess'
 
   s.add_runtime_dependency "colorize"
   s.add_development_dependency "bundler", "~> 1.7"
