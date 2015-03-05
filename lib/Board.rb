@@ -76,18 +76,11 @@ class Board
               @@player_turn = (["black", "red"] - [@@player_turn]).first
               board_refresh
             else
-              puts "Please move #{@@player_turn} king out of check to continue"
+              p "Please move #{@@player_turn} king out of check to continue"
             end
-
-          else
-            puts "Please select a valid destination."
-          end
-      else
-        puts "It is #{@@player_turn}'s turn. Please move a #{@@player_turn} piece."
-      end
-    else
-      puts "Checkmate! Game Over."
-    end
+          else p "Please select a valid destination." end
+      else p "It is #{@@player_turn}'s turn. Please move a #{@@player_turn} piece." end
+    else p "Checkmate! Game Over." end
   end
 
   # Return the valid positions for piece at current_pos to move in readable format [A-H][1-8]

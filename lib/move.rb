@@ -167,7 +167,6 @@ module MOVE
         if unoccupied?(next_pos)
           valid << next_pos
         else
-          #puts "PC #{piece_color(next_pos)} #{enemy_color}" #INCOMEPSDFJDSLFJDKLFJDASKLF
           if piece_color(next_pos) == @@enemy_color
             valid << next_pos
           end
@@ -279,11 +278,11 @@ module MOVE
   def castle(index)
     valid = []
     dangerous_tiles = attack_vectors
-    
+
     # Valid positions for a King to be in order to castle
     if index == 5 || index == 61
       # Empty space between a King and a Rook
-      if unoccupied?(index - 1) && unoccupied?(index - 2) && unoccupied?(index - 3) && @@pieces[index - 4]["moved"] == false 
+      if unoccupied?(index - 1) && unoccupied?(index - 2) && unoccupied?(index - 3) && @@pieces[index - 4]["moved"] == false
         # Ensure king does not move through check or into check
         if !dangerous_tiles.include?(index - 1) && !dangerous_tiles.include?(index - 2)
           # King's castle position

@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.description = "Two player chess game through the terminal"
   s.authors     = ["Jason Willems"]
   s.email       = 'hello@jasonwillems.com'
-  s.homepage    = 'https://github.com/atlas/Terminal-Chess'
+  s.homepage    = 'https://github.com/at1as/Terminal-Chess'
   s.license     = 'MIT'
 
   s.files       = `git ls-files`.split("\n") 

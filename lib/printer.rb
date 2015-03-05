@@ -2,8 +2,8 @@
 
 module PRINTER
 
-  VERSION = "0.1.0"
-  COLS = ['A','B','C','D','E','F','G','H']
+  VERSION ||= "0.1.0"
+  COLS ||= ['A','B','C','D','E','F','G','H']
   @@n = 0
   @@print_count = 1
 
