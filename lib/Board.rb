@@ -44,7 +44,7 @@ class Board
             @piece_locations_buffer[p1] = {"type" => "  ", "number" => nil, "color" => nil}
 
             # If the current player is not in check at the end of the turn, allow them to proceed
-            unless !check?(@player_turn, @piece_locations_buffer)
+            unless check?(@player_turn, @piece_locations_buffer)
               
               @taken_pieces << @piece_locations[p2] unless @piece_locations[p2]["number"].nil?
               
