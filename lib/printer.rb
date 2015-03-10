@@ -2,7 +2,6 @@
 
 module PRINTER
 
-  VERSION ||= "0.1.0"
   COLS ||= ['A','B','C','D','E','F','G','H']
   @@n = 0
   @@print_count = 1
@@ -16,7 +15,7 @@ module PRINTER
     system "clear" or system "cls"
 
     # Header (title & column labels)
-    print "\n\t>> Welcome to Terminal Chess v#{VERSION}\n\n\s\s\s"
+    print "\n\t>> Welcome to Terminal Chess v#{TerminalChess::VERSION}\n\n\s\s\s"
     COLS.each { |c| print " _#{c}__ " }
     puts "\n"
 
