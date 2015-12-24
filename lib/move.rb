@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-module MOVE
+module Move
 
   def constants(piece_mapping, color, piece)
     @@pieces = piece_mapping

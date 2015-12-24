@@ -40,11 +40,6 @@ Location: c6
 
 ![Screenshot](http://at1as.github.io/github_repo_assets/terminal_chess.jpg)
 
-### Requirements
-Requires the colorize Ruby gem (listed in .gemspec file)
-```bash
-$ sudo gem install colorize
-```
  
 ### Usage
 The easiest way to use terminal_chess is to install it via the [Rubygem](https://rubygems.org/gems/terminal_chess). This is likely to be a few commits behind, but generally more stable.
@@ -54,6 +49,12 @@ Otherwise, clone this repo directly and run:
 $ git clone git@github.com:at1as/Terminal-Chess.git
 $ chmod +x lib/terminal_chess.rb
 $ ruby lib/terminal_chess.rb
+```
+
+Testing:
+
+```bash
+$ bundle exec rake test --trace
 ```
 
 ### Limitations

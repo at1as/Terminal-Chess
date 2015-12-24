@@ -1,4 +1,3 @@
-#require 'test/unit'
 require 'minitest/autorun'
 require "./lib/terminal_chess/version"
 require "printer.rb"

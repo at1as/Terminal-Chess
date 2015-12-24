@@ -6,8 +6,8 @@ require 'colorize'
 
 class Board
 
-  include PRINTER
-  include MOVE
+  include Printer
+  include Move
 
   def initialize
     @piece_locations = Hash.new
@@ -95,7 +95,7 @@ class Board
   end
 
   # Search piece manifest for kings. Remove them from the list of positions returned
-  # from the MOVE module (so that players cannot take the "king" type piece)
+  # from the Move module (so that players cannot take the "king" type piece)
   def king_positions
     king_locations = Array.new
     @piece_locations.each { |piece, details| king_locations << piece if details.fetch("type") == "king"}

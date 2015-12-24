@@ -1,74 +1,108 @@
 #!/usr/bin/env ruby
 
-module PRINTER
+module Printer
 
   COLS ||= ['A','B','C','D','E','F','G','H']
-  @@n = 0
-  @@print_count = 1
+  @@subrow = 0        # Reference to current row within a cell
+  @@print_count = 1   # Reference to the current cell
 
 
-  # Prints the board to terminal, based on layout defined by piece_locations
-  def printer
-    
-    # Clear and reset counters
-    @@print_count = 1
-    system "clear" or system "cls"
-
-    # Header (title & column labels)
+  def print_header
+    # Print chess board Header (Title and then Column Labels A to H)
     print "\n\t>> Welcome to Terminal Chess v#{TerminalChess::VERSION}\n\n\s\s\s"
     COLS.each { |c| print " _#{c}__ " }
     puts "\n"
-
-    # Print Cells (use printer block and pass cell styling in loop below)
-    (1..8).each do |row|
-      yield "|    |"
-      yield "| XX |", "#{row}"
-      yield "|____|"
-    end
-
-    # Footer (print column labels)
+  end
+  
+  def print_footer
+    # Print chess board footer (Column Labels A to H)
     print "\s\s\s"
     COLS.each { |c| print "  #{c}   " }
     puts ""
   end
+  
+  def print_start_of_row(row_num)
+    # Begin each board row by printing row index (1..8) in the vertical center of each cell
+    # Otherwise pad with spaces for correct alignment
+    if row_num
+      print " #{row_num} "
+    else
+      print "   "
+    end
+  end
 
+  def print_end_of_row(row_num)
+    # Print succeeding row index (1...8) if applicable
+    if (@@subrow == 1 || @@subrow == 4) && row_num
+      print " #{row_num}"
+    end
+  end
+
+  def clear_all
+    # Reset counters and clear terminal
+    @@print_count = 1
+    system "clear" or system "cls"
+  end
+
+
+  def printer
+    # Prints the board to terminal, based on layout defined by piece_locations
+    
+    clear_all
+    print_header
+
+    # Print first cell of each row, with row number
+    (1..8).each do |row|
+      yield "      "
+      yield "  XX  ", "#{row}"
+      yield "      "
+    end
+    
+    print_footer
+  end
+
+  def substitute_pieces(text, index, color, background_color, piece_locations)
+    piece = piece_locations[index]["type"][0..1]
+    piece.upcase! unless piece == "pa"
+    piece = piece.colorize(:color => color.to_sym)
+
+    if background_color == "white"
+      return text.gsub("XX", piece).on_light_white
+    else 
+      return text.gsub("XX", piece).on_light_black
+    end
+  end
 
   def print_board(piece_locations)
-    printer { |i, j|
+    printer { |i, row_num|
 
-      # Print preceeding row index (1...8) if applicable
-      if j then print " #{j} " else print "   " end
-      if @@n < 3
-        # Print cell (4 characters wide, 3 characters tall)
-        4.times do
-          color = piece_locations[@@print_count]["color"] || "black"
-          next_color = piece_locations[@@print_count+1]["color"] || "black"
-          print "#{i}".gsub("XX", piece_locations[@@print_count]["type"][0..1].upcase).colorize(:"#{color}").on_light_white
-          print "#{i}".gsub("XX", piece_locations[@@print_count+1]["type"][0..1].upcase).colorize(:"#{next_color}").on_light_black
-          if "#{i}".include? "XX"
-            # Incremenet print_count, unless last cell is being printed, to avoid an out of range error
-            @@print_count += 2 unless @@print_count == 63
-          end
+      print_start_of_row(row_num)
+      
+      # Print row of cells line by line
+      4.times do
+        # Print cell and next cell
+        color = piece_locations[@@print_count]["color"] || "black"
+        next_color = piece_locations[@@print_count + 1]["color"] || "black"
+        
+        if @@subrow < 3
+          print substitute_pieces(i, @@print_count, color, "white", piece_locations)
+          print substitute_pieces(i, @@print_count + 1, next_color, "black", piece_locations)
+        else
+          print substitute_pieces(i, @@print_count, color, "black", piece_locations)
+          print substitute_pieces(i, @@print_count + 1, next_color, "white", piece_locations)
         end
-      else
-        # Print cell starting with alternative color (4 characters wide, 3 characters tall)
-        4.times do
-          color = piece_locations[@@print_count]["color"] || "black"
-          next_color = piece_locations[@@print_count+1]["color"] || "black"
-          print "#{i}".gsub("XX", piece_locations[@@print_count]["type"][0..1].upcase).colorize(:"#{color}").on_light_black
-          print "#{i}".gsub("XX", piece_locations[@@print_count+1]["type"][0..1].upcase).colorize(:"#{next_color}").on_light_white
-          if "#{i}".include? "XX"
-            @@print_count += 2 unless @@print_count == 63
-          end
+
+        if "#{i}".include? "XX"
+          # Incremenet print_count, unless last cell is being printed, to avoid an out of range error
+          @@print_count += 2 unless @@print_count == 63
         end
       end
 
-      # Print succeeding row index (1...8) if applicable
-      if (@@n == 1 || @@n == 4) && j then print " #{j}" end
+      print_end_of_row(row_num)
 
       # Incriment row index. Reset once n reaches 6 (i.e., two complete cell rows have been printed - the pattern to repeat)
-      @@n += 1
-      if @@n == 6 then @@n = 0 end
+      @@subrow += 1
+      @@subrow = 0 if @@subrow == 6
       puts ""
     }
   end
