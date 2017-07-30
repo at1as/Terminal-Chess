@@ -15,11 +15,11 @@ module Move
   def possible_moves(p1, manifest, castling = false)
     allowed   = []
 
-    type      = manifest[p1]["type"]
-    my_color  = manifest[p1]["color"]
-    
-    constants(manifest, my_color, type)
+    type      = manifest[p1][:type]
+    my_color  = manifest[p1][:color]
 
+    constants(manifest, my_color, type)
+    
     unless unoccupied?(p1)
 
       if type == "king"
@@ -45,7 +45,7 @@ module Move
       end
     end
     
-    allowed
+    return allowed
   end
 
 
@@ -68,7 +68,7 @@ module Move
         valid << (p1 - 9)
       end
       # Only if the pieces is unmoved, can it move forward two rows
-      if !@@pieces[p1]["moved"] && unoccupied?(p1 - 8) && unoccupied?(p1 - 16)
+      if !@@pieces[p1][:moved] && unoccupied?(p1 - 8) && unoccupied?(p1 - 16)
         valid << (p1 - 16)
       end
     
@@ -83,7 +83,7 @@ module Move
       if piece_color(p1 + 9) == @@enemy_color && col < 8
         valid << (p1 + 9)
       end
-      if !@@pieces[p1]["moved"] && unoccupied?(p1 + 8) && unoccupied?(p1 + 16)
+      if !@@pieces[p1][:moved] && unoccupied?(p1 + 8) && unoccupied?(p1 + 16)
         valid << (p1 + 16)
       end
     end
@@ -288,16 +288,17 @@ module Move
     valid = []
     dangerous_tiles = attack_vectors
 
-    # Valid positions for a King to be in order to castle
-    if index == 5 || index == 61
-      # Empty space between a King and a Rook
-      if unoccupied?(index - 1) && unoccupied?(index - 2) && unoccupied?(index - 3) && @@pieces[index - 4]["moved"] == false
+    # King may never have moved
+    if [5, 61].include?(index) && @@pieces[index][:moved] == false
+      # Ensure empty space between a King and a Rook
+      if unoccupied?(index - 1) && unoccupied?(index - 2) && unoccupied?(index - 3) && @@pieces[index - 4][:moved] == false
         # Ensure king does not move through check or into check
         if !dangerous_tiles.include?(index - 1) && !dangerous_tiles.include?(index - 2)
           # King's castle position
           valid << index - 2
         end
-      elsif unoccupied?(index + 1) && unoccupied?(index + 2) && @@pieces[index + 3]["moved"] == false
+    
+      elsif unoccupied?(index + 1) && unoccupied?(index + 2) && @@pieces[index + 3][:moved] == false
         if !dangerous_tiles.include?(index + 1) && !dangerous_tiles.include?(index + 2)
           valid << index + 2
         end
@@ -310,7 +311,7 @@ module Move
 
   # Check if board tile currently has a piece
   def unoccupied?(index)
-    if @@pieces[index]["color"].nil?
+    if @@pieces[index][:color].nil?
       return true
     else
       return false
@@ -320,23 +321,23 @@ module Move
 
   # Return true if the piece has moved before
   def moved?(index)
-    if @@pieces[index]["moved"]
-      return true
+    if @@pieces[index][:moved]
+      true
     else
-      return false
+      false
     end
   end
 
 
   # Return piece color ("red" or "black") from index (1 - 64)
   def piece_color(index)
-    @@pieces[index]["color"]
+    @@pieces[index][:color]
   end
 
 
   # Method used when moving, to verify the piece at index (1 - 64) is not of type "king"
   def not_king(index)
-    @@piece_locations[index]["type"] == "king"
+    @@piece_locations[index][:type] == "king"
   end
 
 
@@ -349,9 +350,9 @@ module Move
   # Obtain chess board column number (1 - 8) from an index (1 - 64)
   def get_col_from_index(index)
     if index % 8 == 0
-      return 8
+      8
     else
-      return index % 8
+      index % 8
     end
   end
 

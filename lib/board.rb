@@ -40,7 +40,7 @@ class Board
     # Allow piece movements, unless in checkmate
     if !@checkmate
       # Ensure player is moving in turn
-      if @player_turn == @piece_locations[p1]["color"]
+      if @player_turn == @piece_locations[p1][:color]
 
           @piece_locations_buffer = @piece_locations.clone
           
@@ -48,45 +48,45 @@ class Board
           if ([p2] - valid_positions).empty?
             
             @piece_locations_buffer[p2] = @piece_locations_buffer[p1]
-            @piece_locations_buffer[p2]["moved"] = true
+            @piece_locations_buffer[p2][:moved] = true
             @piece_locations_buffer[p1] = {
-              "type" => "  ",
-              "number" => nil,
-              "color" => nil
+              :type => "  ",
+              :number => nil,
+              :color => nil
             }
 
             # If the current player is not in check at the end of the turn, allow them to proceed
             unless check?(@player_turn, @piece_locations_buffer)
               
-              @taken_pieces << @piece_locations[p2] unless @piece_locations[p2]["number"].nil?
+              @taken_pieces << @piece_locations[p2] unless @piece_locations[p2][:number].nil?
               
               # Check for Pawn Promotion (if pawn reaches end of the board, promote it)
-              if @piece_locations_buffer[p2]["type"] == "pawn"
-                if p2 < 9 && @piece_locations_buffer[p2]["color"] == "red"
+              if @piece_locations_buffer[p2][:type] == "pawn"
+                if p2 < 9 && @piece_locations_buffer[p2][:color] == "red"
                   promote(p2)
-                elsif p2 > 56 && @piece_locations_buffer[p2]["color"] == "black"
+                elsif p2 > 56 && @piece_locations_buffer[p2][:color] == "black"
                   promote(p2)
                 end
               end
 
               # Check for Castling - https://en.m.wikipedia.org/wiki/Castling
-              if @piece_locations_buffer[p2]["type"] == "king" && (p2 - p1).abs == 2
+              if @piece_locations_buffer[p2][:type] == "king" && (p2 - p1).abs == 2
                 
                 p2 < 9 ? y_offset = 0 : y_offset = 56
                 
                 if p2 > p1
                   @piece_locations_buffer[6+y_offset] = @piece_locations_buffer[8+y_offset]
                   @piece_locations_buffer[8+y_offset] = {
-                    "type"   => "  ",
-                    "number" => nil,
-                    "color"  => nil
+                    :type   => "  ",
+                    :number => nil,
+                    :color  => nil
                   }
                 else
                   @piece_locations_buffer[4+y_offset] = @piece_locations_buffer[1+y_offset]
                   @piece_locations_buffer[1+y_offset] = {
-                    "type"   => "  ",
-                    "number" => nil,
-                    "color"  => nil
+                    :type   => "  ",
+                    :number => nil,
+                    :color  => nil
                   }
                 end
               end
@@ -132,7 +132,7 @@ class Board
     king_locations = Array.new
 
     @piece_locations.each do |piece, details|
-      king_locations << piece if details.fetch("type") == "king"
+      king_locations << piece if details.fetch(:type) == "king"
     end
 
     king_locations
@@ -148,17 +148,21 @@ class Board
       promo_piece = gets.chomp.downcase
       
       if promo_piece == "q" || promo_piece == "queen"
-        @piece_locations_buffer[p1]["type"] = "queen"
+        @piece_locations_buffer[p1][:type] = "queen"
         break
+
       elsif promo_piece == "k" || promo_piece == "knight"
-        @piece_locations_buffer[p1]["type"] = "knight"
+        @piece_locations_buffer[p1][:type] = "knight"
         break
+      
       elsif promo_piece == "r" || promo_piece == "rook"
-        @piece_locations_buffer[p1]["type"] = "rook"
+        @piece_locations_buffer[p1][:type] = "rook"
         break
+      
       elsif promo_piece == "b" || promo_piece == "bishop"
-        @piece_locations_buffer[p1]["type"] = "bishop"
+        @piece_locations_buffer[p1][:type] = "bishop"
         break
+      
       else
         puts "Please enter one of: [Q]ueen, [K]night, [R]ook, [B]ishop"
       end
@@ -176,8 +180,8 @@ class Board
     enemy_color = (["black", "red"] - ["#{color}"]).first
 
     proposed_manifest.each do |piece, details|
-      path << possible_moves(piece, proposed_manifest) if details["color"] == enemy_color
-      king_loc = piece if details["color"] == color && details["type"] == "king"
+      path << possible_moves(piece, proposed_manifest) if details[:color] == enemy_color
+      king_loc = piece if details[:color] == color && details[:type] == "king"
     end
 
     danger_vector = path.flatten.uniq
@@ -187,6 +191,7 @@ class Board
     if danger_vector.include? king_loc
       # If all the positions the can move to is also attackable by the opposing player
       unless (king_positions - danger_vector).length == 0
+        # TODO:
         # This is flawed. It verified whether the king could move out check
         # There are two other cases: whether a piece can remove the enemy
         # And whether the enemy's attack vector can be blocked
@@ -207,7 +212,7 @@ class Board
     kill_zone = Array.new
     
     proposed_manifest.each do |piece, details|
-      kill_zone << possible_moves(piece, proposed_manifest) if details.fetch("color") == enemy_color
+      kill_zone << possible_moves(piece, proposed_manifest) if details.fetch(:color) == enemy_color
     end
 
     kill_zone.flatten.uniq
@@ -230,6 +235,7 @@ class Board
   def get_rowcol_from_index(index)
     letter = get_col_from_index(index)
     number = get_row_from_index(index)
+
     "#{letter}#{number}"
   end
 
@@ -240,47 +246,47 @@ class Board
     # Create empty tiles for chess board
     (1..64).each do |location|
       @piece_locations[location] = {
-        "type"   => "  ",
-        "number" => nil,
-        "color"  => nil
+        :type   => "  ",
+        :number => nil,
+        :color  => nil
       }
     end
 
     # Add Black Pieces to board
-    @piece_locations[1] = {"type" => "rook",   "number" => 1, "color" => "black", "moved" => false}
-    @piece_locations[2] = {"type" => "knight", "number" => 1, "color" => "black", "moved" => false}
-    @piece_locations[3] = {"type" => "bishop", "number" => 1, "color" => "black", "moved" => false}
-    @piece_locations[4] = {"type" => "queen",  "number" => 1, "color" => "black", "moved" => false}
-    @piece_locations[5] = {"type" => "king",   "number" => 1, "color" => "black", "moved" => false}
-    @piece_locations[6] = {"type" => "bishop", "number" => 2, "color" => "black", "moved" => false}
-    @piece_locations[7] = {"type" => "knight", "number" => 2, "color" => "black", "moved" => false}
-    @piece_locations[8] = {"type" => "rook",   "number" => 2, "color" => "black", "moved" => false}
+    @piece_locations[1] = {:type => "rook",   :number => 1, :color => "black", :moved => false}
+    @piece_locations[2] = {:type => "knight", :number => 1, :color => "black", :moved => false}
+    @piece_locations[3] = {:type => "bishop", :number => 1, :color => "black", :moved => false}
+    @piece_locations[4] = {:type => "queen",  :number => 1, :color => "black", :moved => false}
+    @piece_locations[5] = {:type => "king",   :number => 1, :color => "black", :moved => false}
+    @piece_locations[6] = {:type => "bishop", :number => 2, :color => "black", :moved => false}
+    @piece_locations[7] = {:type => "knight", :number => 2, :color => "black", :moved => false}
+    @piece_locations[8] = {:type => "rook",   :number => 2, :color => "black", :moved => false}
 
     (1..8).each do |col|
       @piece_locations[col + 8] = {
-        "type"   => "pawn",
-        "number" => col,
-        "color"  => "black",
-        "moved"  => false
+        :type   => "pawn",
+        :number => col,
+        :color  => "black",
+        :moved  => false
       }
     end
 
     # Add White Pieces to board
-    @piece_locations[57] = {"type" => "rook",   "number" => 1, "color" => "red", "moved" => false}
-    @piece_locations[58] = {"type" => "knight", "number" => 1, "color" => "red", "moved" => false}
-    @piece_locations[59] = {"type" => "bishop", "number" => 1, "color" => "red", "moved" => false}
-    @piece_locations[60] = {"type" => "queen",  "number" => 1, "color" => "red", "moved" => false}
-    @piece_locations[61] = {"type" => "king",   "number" => 1, "color" => "red", "moved" => false}
-    @piece_locations[62] = {"type" => "bishop", "number" => 2, "color" => "red", "moved" => false}
-    @piece_locations[63] = {"type" => "knight", "number" => 2, "color" => "red", "moved" => false}
-    @piece_locations[64] = {"type" => "rook",   "number" => 2, "color" => "red", "moved" => false}
+    @piece_locations[57] = {:type => "rook",   :number => 1, :color => "red", :moved => false}
+    @piece_locations[58] = {:type => "knight", :number => 1, :color => "red", :moved => false}
+    @piece_locations[59] = {:type => "bishop", :number => 1, :color => "red", :moved => false}
+    @piece_locations[60] = {:type => "queen",  :number => 1, :color => "red", :moved => false}
+    @piece_locations[61] = {:type => "king",   :number => 1, :color => "red", :moved => false}
+    @piece_locations[62] = {:type => "bishop", :number => 2, :color => "red", :moved => false}
+    @piece_locations[63] = {:type => "knight", :number => 2, :color => "red", :moved => false}
+    @piece_locations[64] = {:type => "rook",   :number => 2, :color => "red", :moved => false}
 
     (1..8).each do |col|
       @piece_locations[col + 48] = {
-        "type"   => "pawn",
-        "number" => col,
-        "color"  => "red",
-        "moved"  => false
+        :type   => "pawn",
+        :number => col,
+        :color  => "red",
+        :moved  => false
       }
     end
   end

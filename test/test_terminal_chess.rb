@@ -55,7 +55,7 @@ class TestBoard < MiniTest::Test
       all_tiles = get_board
       count = 0
       all_tiles.each do |num, details|
-        count += 1 if details.fetch("type") == piece
+        count += 1 if details.fetch(:type) == piece
       end
       
       count
@@ -67,7 +67,7 @@ class TestBoard < MiniTest::Test
       
       all_tiles.each do |num, details|
         if num >= lowerbound && num <= upperbound
-          empty = empty && details.fetch("type") == "  "
+          empty = empty && details.fetch(:type) == "  "
         end
       end
 
@@ -77,7 +77,7 @@ class TestBoard < MiniTest::Test
     def type_on_tile(index)
       all_tiles = get_board
       all_tiles.each do |num, details|
-        return details.fetch("type") if num == index
+        return details.fetch(:type) if num == index
       end
     end
   end
@@ -207,6 +207,44 @@ class TestBoard < MiniTest::Test
     move_piece("D1", "D2")  # Error moving black pawn
     move_piece("D7", "D6")  # Error moving black pawn
     assert_equal(["C1", "D1"], valid_piece_movement("E1"), "King should be allowed to move left one or two tiles")
+  end
+  
+  def test_king_cannot_castle_to_right_after_king_has_moved
+    move_piece("G2", "G4")  # black pawn
+    move_piece("A7", "A5")  # red pawn
+    move_piece("F1", "H3")  # black bishop
+    move_piece("A8", "A6")  # red rook
+    move_piece("G1", "F3")  # black knight
+    move_piece("A5", "A4")  # red pawn
+    move_piece("E1", "F1")  # move king right one
+    move_piece("H7", "H6")  # red pawn
+    move_piece("F1", "E1")  # move king back to its original position
+    assert_equal(["F1"], valid_piece_movement("E1"), "King should not be allowed to castle right after moving")
+  end
+  
+  def test_king_cannot_castle_to_left_after_king_has_moved
+    move_piece("B1", "A3")  #
+    move_piece("A7", "A6")  # 
+    move_piece("D2", "D4")  # 
+    move_piece("B7", "B6")  # 
+    move_piece("C1", "F4")  # 
+    move_piece("C7", "C6")  # 
+    move_piece("D1", "D2")  # 
+    move_piece("D7", "D6")  # 
+    move_piece("E1", "D1")  # Move king left one position
+    move_piece("H7", "H6")  # red pawn  
+    move_piece("D1", "E1")  # Move king back to original position
+    assert_equal(["D1"], valid_piece_movement("E1"), "King should not be allowed to castle left after moving")
+  end
+  
+  def test_king_cannot_castle_to_left_after_left_rook_has_moved
+    # TODO
+    pass
+  end
+  
+  def test_king_cannot_castle_to_right_after_right_rook_has_moved
+    # TODO
+    pass
   end
 
   def test_king_can_kill_check_attacker
