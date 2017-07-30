@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-$LOAD_PATH << '.'
+$LOAD_PATH << __FILE__ #'.'
 
 require_relative "terminal_chess/version"
 require_relative "printer.rb"
@@ -8,8 +8,8 @@ require_relative "move.rb"
 require_relative "board.rb"
 
 # Setup
-board = Board.new; 
-board.setup_board; 
+board = Board.new
+board.setup_board 
 board.board_refresh
 
 # Gameplay

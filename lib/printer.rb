@@ -2,7 +2,17 @@
 
 module Printer
 
-  COLS ||= ['A','B','C','D','E','F','G','H']
+  # TODO : Replace text pieces with unicode symbols
+  PIECE_TO_UNICODE_MAPPING ||= {
+    "pa": "♙",
+    "ro": "♖",
+    "bi": "♗",
+    "kn": "♘",
+    "ki": "♔",
+    "qu": "♕"
+  }
+
+  COLS ||= ('A'..'H')
   @@subrow = 0        # Reference to current row within a cell
   @@print_count = 1   # Reference to the current cell
 
@@ -10,15 +20,15 @@ module Printer
   def print_header
     # Print chess board Header (Title and then Column Labels A to H)
     print "\n\t>> Welcome to Terminal Chess v#{TerminalChess::VERSION}\n\n\s\s\s"
-    COLS.each { |c| print " _#{c}__ " }
-    puts "\n"
+    COLS.each { |c| print "  #{c}   " }
+    puts
   end
   
   def print_footer
     # Print chess board footer (Column Labels A to H)
     print "\s\s\s"
     COLS.each { |c| print "  #{c}   " }
-    puts ""
+    puts
   end
   
   def print_start_of_row(row_num)
@@ -27,7 +37,7 @@ module Printer
     if row_num
       print " #{row_num} "
     else
-      print "   "
+      print " " * 3
     end
   end
 
@@ -74,7 +84,7 @@ module Printer
   end
 
   def print_board(piece_locations)
-    printer { |i, row_num|
+    printer do |i, row_num|
 
       print_start_of_row(row_num)
       
@@ -103,8 +113,8 @@ module Printer
       # Incriment row index. Reset once n reaches 6 (i.e., two complete cell rows have been printed - the pattern to repeat)
       @@subrow += 1
       @@subrow = 0 if @@subrow == 6
-      puts ""
-    }
+      puts
+    end
   end
 
 end

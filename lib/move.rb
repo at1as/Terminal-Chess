@@ -4,9 +4,9 @@ module Move
 
   def constants(piece_mapping, color, piece)
     @@pieces = piece_mapping
-    @@color = color
+    @@color  = color
+    @@type   = piece
     @@enemy_color = (["black", "red"] - ["#{color.downcase}"]).first
-    @@type = piece
   end
 
 
@@ -14,8 +14,10 @@ module Move
   # for piece at index p1, given the current board layout as defined in manifest
   def possible_moves(p1, manifest, castling = false)
     allowed   = []
+
     type      = manifest[p1]["type"]
     my_color  = manifest[p1]["color"]
+    
     constants(manifest, my_color, type)
 
     unless unoccupied?(p1)
@@ -36,19 +38,19 @@ module Move
         allowed += [move_diagonal(p1)].flatten
 
       elsif type == "pawn"
-        allowed += [pawn(p1)].flatten
+        allowed += [move_pawn(p1)].flatten
 
       elsif type == "knight"
-        allowed += [knight(p1)].flatten
+        allowed += [move_knight(p1)].flatten
       end
-
     end
-    return allowed
+    
+    allowed
   end
 
 
   # Returns all valid positions a pawn at index p1 can move to
-  def pawn(p1)
+  def move_pawn(p1)
     row = get_row_from_index(p1)
     col = get_col_from_index(p1)
     valid = []
@@ -66,10 +68,12 @@ module Move
         valid << (p1 - 9)
       end
       # Only if the pieces is unmoved, can it move forward two rows
-      if !@@pieces[p1]["moved"] && unoccupied?(p1 - 16) && unoccupied?(p1 - 8)
+      if !@@pieces[p1]["moved"] && unoccupied?(p1 - 8) && unoccupied?(p1 - 16)
         valid << (p1 - 16)
       end
+    
     elsif @@color == "black"
+      
       if unoccupied?(p1 + 8)
         valid << (p1 + 8)
       end
@@ -79,21 +83,22 @@ module Move
       if piece_color(p1 + 9) == @@enemy_color && col < 8
         valid << (p1 + 9)
       end
-      if !@@pieces[p1]["moved"] && unoccupied?(p1 + 16) && unoccupied?(p1 + 8)
+      if !@@pieces[p1]["moved"] && unoccupied?(p1 + 8) && unoccupied?(p1 + 16)
         valid << (p1 + 16)
       end
     end
 
-    return valid
+    valid
   end
 
 
   # Returns valid positions a knight at index p1 can move to
-  def knight(p1)
+  def move_knight(p1)
     row = get_row_from_index(p1)
     col = get_col_from_index(p1)
+
     valid = []
-    valid_no_ff = []
+    valid_moves_no_friendly_fire = []
 
     # Valid knight moves based on its board position
     if row < 7 && col < 8
@@ -125,11 +130,11 @@ module Move
     # This iterator filters for friendly fire, and removes indexes pointing to same color pices
     valid.each do |pos|
       unless piece_color(pos) == @@color
-        valid_no_ff << pos
+        valid_moves_no_friendly_fire << pos
       end
     end
 
-    return valid_no_ff
+    valid_moves_no_friendly_fire
   end
 
 
@@ -140,8 +145,10 @@ module Move
   def move_lateral(index, limit = 8)
     row = get_row_from_index(index)
     col = get_col_from_index(index)
+
     left, right = [col-1, limit].min, [8-col, limit].min
     up, down = [row-1, limit].min, [8-row, limit].min
+    
     valid = []
 
     # Move down N places until board limit, piece in the way, or specified limit
@@ -157,6 +164,7 @@ module Move
           if piece_color(next_pos) == @@enemy_color
             valid << next_pos
           end
+
           break
         end
     end
@@ -199,7 +207,8 @@ module Move
           break
         end
     end
-    return valid
+    
+    valid
   end
 
 
@@ -271,7 +280,7 @@ module Move
       end
     end
 
-    return valid
+    valid
   end
 
   # Castle: king cannot move into check, or through check
@@ -294,7 +303,8 @@ module Move
         end
       end
     end
-    return valid
+    
+    valid
   end
 
 
@@ -320,19 +330,19 @@ module Move
 
   # Return piece color ("red" or "black") from index (1 - 64)
   def piece_color(index)
-    return @@pieces[index]["color"]
+    @@pieces[index]["color"]
   end
 
 
   # Method used when moving, to verify the piece at index (1 - 64) is not of type "king"
   def not_king(index)
-    return @@piece_locations[index]["type"] == "king"
+    @@piece_locations[index]["type"] == "king"
   end
 
 
   # Obtain chess board row number (1 + 8) from an index (1 - 64)
   def get_row_from_index(index)
-    return (index - 1)/8 + 1
+    (index - 1)/8 + 1
   end
 
 
