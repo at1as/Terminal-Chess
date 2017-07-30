@@ -237,14 +237,33 @@ class TestBoard < MiniTest::Test
     assert_equal(["D1"], valid_piece_movement("E1"), "King should not be allowed to castle left after moving")
   end
   
-  def test_king_cannot_castle_to_left_after_left_rook_has_moved
-    # TODO
-    pass
+  def test_king_cannot_castle_to_right_after_right_rook_has_moved
+    move_piece("G2", "G4")  # black pawn
+    move_piece("A7", "A5")  # red pawn
+    move_piece("F1", "H3")  # black bishop
+    move_piece("A8", "A6")  # red rook
+    move_piece("G1", "F3")  # black knight
+    move_piece("A5", "A4")  # red pawn
+    move_piece("H1", "G1")  # move right rook left one position
+    move_piece("H7", "H6")  # red pawn
+    move_piece("G1", "H1")  # move right rook back to its original position
+    assert_equal(["F1"], valid_piece_movement("E1"), "King should not be allowed to castle right after right rook has moved")
   end
   
-  def test_king_cannot_castle_to_right_after_right_rook_has_moved
+  def test_king_cannot_castle_to_left_after_left_rook_has_moved
     # TODO
-    pass
+    move_piece("B1", "A3")  #
+    move_piece("A7", "A6")  # 
+    move_piece("D2", "D4")  # 
+    move_piece("B7", "B6")  # 
+    move_piece("C1", "F4")  # 
+    move_piece("C7", "C6")  # 
+    move_piece("D1", "D2")  # 
+    move_piece("D7", "D6")  # 
+    move_piece("A1", "B1")  # Move left rook right one position
+    move_piece("H7", "H6")  # red pawn  
+    move_piece("B1", "A1")  # Move left rook back to original position
+    assert_equal(["D1"], valid_piece_movement("E1"), "King should not be allowed to castle left after left rook has moved")
   end
 
   def test_king_can_kill_check_attacker
