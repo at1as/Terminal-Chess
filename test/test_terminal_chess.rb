@@ -348,27 +348,15 @@ class TestBoard < MiniTest::Test
     assert_equal("bishop", type_on_tile(59))
   end
 
-  def test_checkmate
-    move_piece("A2", "A4")
-    move_piece("H7", "H5")
-    move_piece("A4", "A5")
-    move_piece("H8", "H6")
-    move_piece("A5", "A6")
-    move_piece("H6", "E6")
-    move_piece("A6", "B7")
-    move_piece("E6", "E3")
-
-
-    move_piece("E1", "F1")
-    move_piece("E7", "E6")
-    move_piece("A2", "A3")
-    move_piece("D8", "F6")
-    move_piece("A3", "A4")
-    move_piece("F6", "F2")
-    #assert_equal(Messages.checkmate, move_piece("E1", "E2"), "Checkmate. Game Over!")
-
-    #assert_equal(@black_in_check_msg, move_piece("B7", "C8"), "Should not be able to promote pawn while it's in check")
-    #assert_equal("pawn",   type_on_tile(50))
+  def test_checkmate_smothered_mate_kings_pawn
+    move_piece("E2", "E4")
+    move_piece("E7", "E5")
+    move_piece("G1", "E2")
+    move_piece("B8", "C6")
+    move_piece("B1", "C3")
+    move_piece("C6", "D4")
+    move_piece("G2", "G3")
+    assert_equal(Messages.checkmate, move_piece("D4", "F3"), "Checkmate. Game should be over!")
   end
 
   def test_checkmate_fools_mate

@@ -2,7 +2,7 @@
 
 module Move
 
-  NULL_TYPE = "  "
+  NULL_TYPE ||= "  "
 
   def constants(piece_mapping, color, piece)
     @@pieces = piece_mapping

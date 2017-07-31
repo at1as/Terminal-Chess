@@ -12,8 +12,15 @@ board = Board.new
 board.setup_board 
 board.board_refresh
 
+turn_by_turn_playback = []
+
 # Gameplay
 loop do
+
+  if board.checkmate
+    puts "\nTurn by Turn Playback : #{turn_by_turn_playback}\n"
+    exit
+  end
 
   print "\nPiece to Move [#{board.player_turn.capitalize}]: "
   from = gets.chomp.upcase
@@ -27,6 +34,8 @@ loop do
 
   rescue Exception => e
     puts "Invalid selection #{e if !ENV["DEV"].nil?}"
+  else
+    turn_by_turn_playback << [from, to]
   end
 end
 

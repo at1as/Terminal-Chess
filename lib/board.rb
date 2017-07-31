@@ -40,11 +40,14 @@ class Board
     valid_positions -= king_positions
 
     # If checkmate, game over
+    # TODO: This shouldn't be necessary anymore as it's checked at the end of the move function
     if @checkmate || check?(@player_turn, @piece_locations, true)
-      return p "Checkmate! Game Over. -1"
+      return p "Checkmate! Game Over."
     end
 
     # If player is moving out of turn, display message
+    # `return p ...` is so we print value and return it from the function
+    #  this is so the unit tests can get the value directly. There are better ways to do this
     unless @player_turn == @piece_locations[p1][:color]
       return p "It is #{@player_turn}'s turn. Please move a #{@player_turn} piece."
     end
@@ -108,13 +111,16 @@ class Board
     @piece_locations = @piece_locations_buffer
     @player_turn = (["black", "red"] - [@player_turn]).first
     board_refresh
-    update_checkmate_status(@piece_locations)
 
     #return p Messages.red_in_check   if check?("black", @piece_locations, true)
     #return p Messages.black_in_check if check?("red", @piece_locations, true)
     
-    return p Messages.checkmate if check?("red", @piece_locations, true) || check?("black", @piece_locations, true)
+    if check?("red", @piece_locations, true) || check?("black", @piece_locations, true)
+      @checkmate = true
+      return p Messages.checkmate
+    end
   end
+
 
   # Return the valid positions for piece at current_pos to move in readable format [A-H][1-8]
   def valid_destinations(current_pos)
@@ -132,6 +138,7 @@ class Board
 
     readable_positions.sort
   end
+
 
   # Search piece manifest for kings. Remove them from the list of positions returned
   # from the Move module (so that players cannot take the "king" type piece)
@@ -185,6 +192,7 @@ class Board
       check?(color, manifest, true)
     end
   end
+
 
   # Return whether the player of a specified color has their king currently in check
   # by checking the attack vectors of all the opponents players against the king location
