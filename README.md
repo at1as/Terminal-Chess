@@ -65,6 +65,4 @@ $ bundle exec rake test --trace
 
 ### Limitations
 * Built and tested on macOS 10.11 with Ruby 2.4.0
-* For now, checkmate will need to be verified manually
-* TODO: Code cleanup. Printer module is painful to read.
-* Niether player can be automated
+* Neither player can currently be automated

@@ -2,6 +2,7 @@
 
 load 'printer.rb'
 load 'move.rb'
+load 'terminal_chess/messages.rb'
 require 'colorize'
 
 class Board
@@ -25,88 +26,94 @@ class Board
     @checkmate       = false
   end
 
-
   # Game logic
   def move(p1, p2)
 
-    manifest = piece_manifest
+    manifest = piece_manifest()
+    update_checkmate_status(manifest)
+
     p1 = get_index_from_rowcol(p1.to_s)
     p2 = get_index_from_rowcol(p2.to_s)
-    valid_positions = possible_moves(p1, manifest, true)
 
-    ##Subtract king current position from valid positions
+    # Find valid positions and subtract king current position as nobody can directly take king piece
+    valid_positions = possible_moves(p1, manifest, true)
     valid_positions -= king_positions
 
-    # Allow piece movements, unless in checkmate
-    if !@checkmate
-      # Ensure player is moving in turn
-      if @player_turn == @piece_locations[p1][:color]
-
-          @piece_locations_buffer = @piece_locations.clone
-          
-          # Chosen destination is within the list of valid destinations
-          if ([p2] - valid_positions).empty?
-            
-            @piece_locations_buffer[p2] = @piece_locations_buffer[p1]
-            @piece_locations_buffer[p2][:moved] = true
-            @piece_locations_buffer[p1] = {
-              :type => "  ",
-              :number => nil,
-              :color => nil
-            }
-
-            # If the current player is not in check at the end of the turn, allow them to proceed
-            unless check?(@player_turn, @piece_locations_buffer)
-              
-              @taken_pieces << @piece_locations[p2] unless @piece_locations[p2][:number].nil?
-              
-              # Check for Pawn Promotion (if pawn reaches end of the board, promote it)
-              if @piece_locations_buffer[p2][:type] == "pawn"
-                if p2 < 9 && @piece_locations_buffer[p2][:color] == "red"
-                  promote(p2)
-                elsif p2 > 56 && @piece_locations_buffer[p2][:color] == "black"
-                  promote(p2)
-                end
-              end
-
-              # Check for Castling - https://en.m.wikipedia.org/wiki/Castling
-              if @piece_locations_buffer[p2][:type] == "king" && (p2 - p1).abs == 2
-                
-                p2 < 9 ? y_offset = 0 : y_offset = 56
-                
-                if p2 > p1
-                  @piece_locations_buffer[6+y_offset] = @piece_locations_buffer[8+y_offset]
-                  @piece_locations_buffer[8+y_offset] = {
-                    :type   => "  ",
-                    :number => nil,
-                    :color  => nil
-                  }
-                else
-                  @piece_locations_buffer[4+y_offset] = @piece_locations_buffer[1+y_offset]
-                  @piece_locations_buffer[1+y_offset] = {
-                    :type   => "  ",
-                    :number => nil,
-                    :color  => nil
-                  }
-                end
-              end
-
-              # Clean Up 
-              @piece_locations = @piece_locations_buffer
-              @player_turn = (["black", "red"] - [@player_turn]).first
-              board_refresh
-            else
-              p "Please move #{@player_turn} king out of check to continue"
-            end
-          else
-            p "Please select a valid destination."
-          end
-      else 
-        p "It is #{@player_turn}'s turn. Please move a #{@player_turn} piece."
-      end
-    else
-      p "Checkmate! Game Over."
+    # If checkmate, game over
+    if @checkmate || check?(@player_turn, @piece_locations, true)
+      return p "Checkmate! Game Over. -1"
     end
+
+    # If player is moving out of turn, display message
+    unless @player_turn == @piece_locations[p1][:color]
+      return p "It is #{@player_turn}'s turn. Please move a #{@player_turn} piece."
+    end
+
+    # Check if proposed move is to a valid destination
+    unless ([p2] - valid_positions).empty?
+      return p "Please select a valid destination."
+    end
+
+
+    # Assemble new board with proposed movement
+    @piece_locations_buffer = @piece_locations.clone
+    @piece_locations_buffer[p2] = @piece_locations_buffer[p1]
+    @piece_locations_buffer[p2][:moved] = true
+    @piece_locations_buffer[p1] = {
+      :type => "  ",
+      :number => nil,
+      :color => nil
+    }
+
+    # If player is in check with the new proposed board, disallow the movement
+    if check?(@player_turn, @piece_locations_buffer, false)
+      return p "Please move #{@player_turn} king out of check to continue"
+    end
+      
+    # At this point, the move appears to be valid              
+    @taken_pieces << @piece_locations[p2] unless @piece_locations[p2][:number].nil?
+    
+    # Check for Pawn Promotion (if pawn reaches end of the board, promote it)
+    if @piece_locations_buffer[p2][:type] == "pawn"
+      if p2 < 9 && @piece_locations_buffer[p2][:color] == "red"
+        promote(p2)
+      elsif p2 > 56 && @piece_locations_buffer[p2][:color] == "black"
+        promote(p2)
+      end
+    end
+
+    # Check for Castling - https://en.m.wikipedia.org/wiki/Castling
+    if @piece_locations_buffer[p2][:type] == "king" && (p2 - p1).abs == 2
+      
+      p2 < 9 ? y_offset = 0 : y_offset = 56
+      
+      if p2 > p1
+        @piece_locations_buffer[6+y_offset] = @piece_locations_buffer[8+y_offset]
+        @piece_locations_buffer[8+y_offset] = {
+          :type   => "  ",
+          :number => nil,
+          :color  => nil
+        }
+      else
+        @piece_locations_buffer[4+y_offset] = @piece_locations_buffer[1+y_offset]
+        @piece_locations_buffer[1+y_offset] = {
+          :type   => "  ",
+          :number => nil,
+          :color  => nil
+        }
+      end
+    end
+
+    # Clean Up 
+    @piece_locations = @piece_locations_buffer
+    @player_turn = (["black", "red"] - [@player_turn]).first
+    board_refresh
+    update_checkmate_status(@piece_locations)
+
+    #return p Messages.red_in_check   if check?("black", @piece_locations, true)
+    #return p Messages.black_in_check if check?("red", @piece_locations, true)
+    
+    return p Messages.checkmate if check?("red", @piece_locations, true) || check?("black", @piece_locations, true)
   end
 
   # Return the valid positions for piece at current_pos to move in readable format [A-H][1-8]
@@ -171,42 +178,90 @@ class Board
 
   private :promote
 
+
+  # TODO: use this function
+  def update_checkmate_status(manifest)
+    ["black", "red"].each do |color|
+      check?(color, manifest, true)
+    end
+  end
+
   # Return whether the player of a specified color has their king currently in check
-  # by checking the attack vectors of all the opponents players, versus the king location
+  # by checking the attack vectors of all the opponents players against the king location
   # Also, check whether king currently in check, has all of their valid moves within
   # their opponents attack vectors, and therefore are in checkmate (@checkmate)
-  def check?(color, proposed_manifest = @piece_locations)
-    path, king_loc = Array.new, Array.new
+  def check?(color, proposed_manifest = @piece_locations, recurse_for_checkmate = true)
+    king_loc = Array.new
+
+    enemy_attack_vectors  = {}
+    player_attack_vectors = {}
+
     enemy_color = (["black", "red"] - ["#{color}"]).first
 
     proposed_manifest.each do |piece, details|
-      path << possible_moves(piece, proposed_manifest) if details[:color] == enemy_color
+
+      if details[:color] == enemy_color
+        enemy_attack_vectors[piece] = possible_moves(piece, proposed_manifest)
+
+      elsif details[:color] == color
+        begin
+        player_attack_vectors[piece] = possible_moves(piece, proposed_manifest)
+        rescue
+          # TODO: Fix possible_moves() so it doesn't throw exceptions
+          # This happens because it is searching board for where pieces
+          # will be, as as a result some pieces are nil
+        end
+      end
+
       king_loc = piece if details[:color] == color && details[:type] == "king"
     end
 
-    danger_vector = path.flatten.uniq
+    danger_vector  = enemy_attack_vectors.values.flatten.uniq
+    defence_vector = player_attack_vectors.values.flatten.uniq
     king_positions = possible_moves(king_loc, proposed_manifest)
 
-    # If the King is in the attackable locations for the opposing player
+    # The King is in the attackable locations by the opposing player
     if danger_vector.include? king_loc
-      # If all the positions the can move to is also attackable by the opposing player
-      unless (king_positions - danger_vector).length == 0
+      # If all the positions the king piece can move to is also attackable by the opposing player
+      if recurse_for_checkmate && !((king_positions - danger_vector).length == 0)
         # TODO:
         # This is flawed. It verified whether the king could move out check
         # There are two other cases: whether a piece can remove the enemy
         # And whether the enemy's attack vector can be blocked
-        #@checkmate = true
+
+        is_in_check = []
+        player_attack_vectors.each do |piece_index, piece_valid_moves|
+          piece_valid_moves.each do |possible_new_location|
+
+            # Check if board is still in check after piece moves to its new location
+            @new_piece_locations = @piece_locations.clone
+            @new_piece_locations[possible_new_location] = @new_piece_locations[piece_index]
+            @new_piece_locations[piece_index] = {
+              :type => "  ",
+              :number => nil,
+              :color => nil
+            }
+
+            is_in_check << check?(color, @new_piece_locations, false)
+          end
+        end
+
+        if is_in_check.include? false
+          return false
+        else
+          @checkmate = true
+        end
       end
+
       true
-    # Piece not in check
     else
-      false
+      false # Piece not in check
     end
   end
 
 
   # Board spaces that are attackable by opposing pieces
-  # TODO: check? method should use this function
+  #  TODO: check? method should use this function
   def attack_vectors(color = @player_turn, proposed_manifest = @piece_locations)
     enemy_color = (["black", "red"] - ["#{color}"]).first
     kill_zone = Array.new

@@ -2,6 +2,8 @@
 
 module Move
 
+  NULL_TYPE = "  "
+
   def constants(piece_mapping, color, piece)
     @@pieces = piece_mapping
     @@color  = color
@@ -14,6 +16,8 @@ module Move
   # for piece at index p1, given the current board layout as defined in manifest
   def possible_moves(p1, manifest, castling = false)
     allowed   = []
+
+    return [] if manifest[p1][:type] == NULL_TYPE
 
     type      = manifest[p1][:type]
     my_color  = manifest[p1][:color]
@@ -312,9 +316,9 @@ module Move
   # Check if board tile currently has a piece
   def unoccupied?(index)
     if @@pieces[index][:color].nil?
-      return true
+      true
     else
-      return false
+      false
     end
   end
 
