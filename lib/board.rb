@@ -12,18 +12,19 @@ class Board
 
   attr_reader :piece_locations, :checkmate, :player_turn
   attr_reader :taken_pieces
-  
+
   alias piece_manifest piece_locations
-  alias checkmate? checkmate
-  
+
 
   def initialize
     @piece_locations_buffer = Hash.new
     @piece_locations = Hash.new
     @row_mappings    = Hash[("A".."H").zip(1..8)]
     @taken_pieces    = Array.new
-    @player_turn     = "black"
+    @player_turn     = :black
     @checkmate       = false
+
+    setup_board
   end
 
   # Game logic
@@ -38,12 +39,6 @@ class Board
     # Find valid positions and subtract king current position as nobody can directly take king piece
     valid_positions = possible_moves(p1, manifest, true)
     valid_positions -= king_positions
-
-    # If checkmate, game over
-    # TODO: This shouldn't be necessary anymore as it's checked at the end of the move function
-    if @checkmate || check?(@player_turn, @piece_locations, true)
-      return p "Checkmate! Game Over."
-    end
 
     # If player is moving out of turn, display message
     # `return p ...` is so we print value and return it from the function
@@ -72,24 +67,24 @@ class Board
     if check?(@player_turn, @piece_locations_buffer, false)
       return p "Please move #{@player_turn} king out of check to continue"
     end
-      
-    # At this point, the move appears to be valid              
+
+    # At this point, the move appears to be valid
     @taken_pieces << @piece_locations[p2] unless @piece_locations[p2][:number].nil?
-    
+
     # Check for Pawn Promotion (if pawn reaches end of the board, promote it)
     if @piece_locations_buffer[p2][:type] == "pawn"
-      if p2 < 9 && @piece_locations_buffer[p2][:color] == "red"
+      if p2 < 9 && @piece_locations_buffer[p2][:color] == :red
         promote(p2)
-      elsif p2 > 56 && @piece_locations_buffer[p2][:color] == "black"
+      elsif p2 > 56 && @piece_locations_buffer[p2][:color] == :black
         promote(p2)
       end
     end
 
     # Check for Castling - https://en.m.wikipedia.org/wiki/Castling
     if @piece_locations_buffer[p2][:type] == "king" && (p2 - p1).abs == 2
-      
+
       p2 < 9 ? y_offset = 0 : y_offset = 56
-      
+
       if p2 > p1
         @piece_locations_buffer[6+y_offset] = @piece_locations_buffer[8+y_offset]
         @piece_locations_buffer[8+y_offset] = {
@@ -107,17 +102,16 @@ class Board
       end
     end
 
-    # Clean Up 
+    # Clean Up
     @piece_locations = @piece_locations_buffer
-    @player_turn = (["black", "red"] - [@player_turn]).first
-    board_refresh
+    @player_turn = ([:black, :red] - [@player_turn]).first
+    display_board
 
-    #return p Messages.red_in_check   if check?("black", @piece_locations, true)
-    #return p Messages.black_in_check if check?("red", @piece_locations, true)
-    
-    if check?("red", @piece_locations, true) || check?("black", @piece_locations, true)
+
+    if (winner = player_in_checkmate(@piece_locations))
       @checkmate = true
-      return p Messages.checkmate
+      return p Messages.black_winner if winner == :black
+      return p Messages.red_winner   if winner == :red
     end
   end
 
@@ -127,9 +121,9 @@ class Board
     readable_positions = Array.new
     manifest = piece_manifest
     p1 = get_index_from_rowcol(current_pos.to_s)
-    
+
     valid_positions = possible_moves(p1, manifest, true)
-    
+
     valid_positions.each do |pos|
       grid_pos = get_rowcol_from_index(pos)
       # Map first string character 1-8 to [A-H], for column, and then add second string character as [1-8]
@@ -143,7 +137,7 @@ class Board
   # Search piece manifest for kings. Remove them from the list of positions returned
   # from the Move module (so that players cannot take the "king" type piece)
   def king_positions
-    king_locations = Array.new
+    king_locations = []
 
     @piece_locations.each do |piece, details|
       king_locations << piece if details.fetch(:type) == "king"
@@ -157,10 +151,10 @@ class Board
   # for another piece (from the list below)
   def promote(p1)
     puts "Promote to: [Q]ueen, [K]night, [R]ook, [B]ishop"
-    
+
     loop do
       promo_piece = gets.chomp.downcase
-      
+
       if promo_piece == "q" || promo_piece == "queen"
         @piece_locations_buffer[p1][:type] = "queen"
         break
@@ -168,15 +162,15 @@ class Board
       elsif promo_piece == "k" || promo_piece == "knight"
         @piece_locations_buffer[p1][:type] = "knight"
         break
-      
+
       elsif promo_piece == "r" || promo_piece == "rook"
         @piece_locations_buffer[p1][:type] = "rook"
         break
-      
+
       elsif promo_piece == "b" || promo_piece == "bishop"
         @piece_locations_buffer[p1][:type] = "bishop"
         break
-      
+
       else
         puts "Please enter one of: [Q]ueen, [K]night, [R]ook, [B]ishop"
       end
@@ -188,11 +182,16 @@ class Board
 
   # TODO: use this function
   def update_checkmate_status(manifest)
-    ["black", "red"].each do |color|
+    [:black, :red].each do |color|
       check?(color, manifest, true)
     end
   end
 
+
+  def player_in_checkmate(manifest = @piece_locations)
+    return :red   if check?(:black, manifest, true)
+    return :black if check?(:red,   manifest, true)
+  end
 
   # Return whether the player of a specified color has their king currently in check
   # by checking the attack vectors of all the opponents players against the king location
@@ -204,7 +203,7 @@ class Board
     enemy_attack_vectors  = {}
     player_attack_vectors = {}
 
-    enemy_color = (["black", "red"] - ["#{color}"]).first
+    enemy_color = ([:black, :red] - [color]).first
 
     proposed_manifest.each do |piece, details|
 
@@ -271,9 +270,9 @@ class Board
   # Board spaces that are attackable by opposing pieces
   #  TODO: check? method should use this function
   def attack_vectors(color = @player_turn, proposed_manifest = @piece_locations)
-    enemy_color = (["black", "red"] - ["#{color}"]).first
+    enemy_color = ([:black, :red] - [color]).first
     kill_zone = Array.new
-    
+
     proposed_manifest.each do |piece, details|
       kill_zone << possible_moves(piece, proposed_manifest) if details.fetch(:color) == enemy_color
     end
@@ -283,7 +282,7 @@ class Board
 
 
   # Reprint the board. Called after every valid piece move
-  def board_refresh
+  def display_board
     print_board @piece_locations
   end
 
@@ -316,39 +315,39 @@ class Board
     end
 
     # Add Black Pieces to board
-    @piece_locations[1] = {:type => "rook",   :number => 1, :color => "black", :moved => false}
-    @piece_locations[2] = {:type => "knight", :number => 1, :color => "black", :moved => false}
-    @piece_locations[3] = {:type => "bishop", :number => 1, :color => "black", :moved => false}
-    @piece_locations[4] = {:type => "queen",  :number => 1, :color => "black", :moved => false}
-    @piece_locations[5] = {:type => "king",   :number => 1, :color => "black", :moved => false}
-    @piece_locations[6] = {:type => "bishop", :number => 2, :color => "black", :moved => false}
-    @piece_locations[7] = {:type => "knight", :number => 2, :color => "black", :moved => false}
-    @piece_locations[8] = {:type => "rook",   :number => 2, :color => "black", :moved => false}
+    @piece_locations[1] = {:type => "rook",   :number => 1, :color => :black, :moved => false}
+    @piece_locations[2] = {:type => "knight", :number => 1, :color => :black, :moved => false}
+    @piece_locations[3] = {:type => "bishop", :number => 1, :color => :black, :moved => false}
+    @piece_locations[4] = {:type => "queen",  :number => 1, :color => :black, :moved => false}
+    @piece_locations[5] = {:type => "king",   :number => 1, :color => :black, :moved => false}
+    @piece_locations[6] = {:type => "bishop", :number => 2, :color => :black, :moved => false}
+    @piece_locations[7] = {:type => "knight", :number => 2, :color => :black, :moved => false}
+    @piece_locations[8] = {:type => "rook",   :number => 2, :color => :black, :moved => false}
 
     (1..8).each do |col|
       @piece_locations[col + 8] = {
         :type   => "pawn",
         :number => col,
-        :color  => "black",
+        :color  => :black,
         :moved  => false
       }
     end
 
     # Add White Pieces to board
-    @piece_locations[57] = {:type => "rook",   :number => 1, :color => "red", :moved => false}
-    @piece_locations[58] = {:type => "knight", :number => 1, :color => "red", :moved => false}
-    @piece_locations[59] = {:type => "bishop", :number => 1, :color => "red", :moved => false}
-    @piece_locations[60] = {:type => "queen",  :number => 1, :color => "red", :moved => false}
-    @piece_locations[61] = {:type => "king",   :number => 1, :color => "red", :moved => false}
-    @piece_locations[62] = {:type => "bishop", :number => 2, :color => "red", :moved => false}
-    @piece_locations[63] = {:type => "knight", :number => 2, :color => "red", :moved => false}
-    @piece_locations[64] = {:type => "rook",   :number => 2, :color => "red", :moved => false}
+    @piece_locations[57] = {:type => "rook",   :number => 1, :color => :red, :moved => false}
+    @piece_locations[58] = {:type => "knight", :number => 1, :color => :red, :moved => false}
+    @piece_locations[59] = {:type => "bishop", :number => 1, :color => :red, :moved => false}
+    @piece_locations[60] = {:type => "queen",  :number => 1, :color => :red, :moved => false}
+    @piece_locations[61] = {:type => "king",   :number => 1, :color => :red, :moved => false}
+    @piece_locations[62] = {:type => "bishop", :number => 2, :color => :red, :moved => false}
+    @piece_locations[63] = {:type => "knight", :number => 2, :color => :red, :moved => false}
+    @piece_locations[64] = {:type => "rook",   :number => 2, :color => :red, :moved => false}
 
     (1..8).each do |col|
       @piece_locations[col + 48] = {
         :type   => "pawn",
         :number => col,
-        :color  => "red",
+        :color  => :red,
         :moved  => false
       }
     end
