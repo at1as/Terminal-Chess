@@ -7,7 +7,6 @@ class Messages
   @black_in_check = "Please move black king out of check to continue"
   @red_winner     = "Checkmate! Red Player Wins!"
   @black_winner   = "Checkmate! Black Player Wins!"
-  @checkmate      = "Checkmate! Game Over."
   @invalid        = "Invalid Selection"
 
   class << self

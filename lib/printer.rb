@@ -74,9 +74,7 @@ module Printer
   end
 
   def substitute_pieces(text, index, color, background_color, piece_locations)
-    # Print pieces as two characters
-    #   "pawn" -> "pa" , "bishop" -> "BI" , "king" -> "KI" , ...
-    piece = piece_locations[index][:type][0..1]
+    piece = piece_to_string(piece_locations[index][:type])
 
     piece.upcase! unless piece == "pa"
     piece = piece.colorize(color)
@@ -86,6 +84,13 @@ module Printer
     else
       text.gsub("XX", piece).on_light_black
     end
+  end
+
+  def piece_to_string(piece_name)
+    # Print pieces as two characters
+    #   "pawn" -> "pa" , "bishop" -> "BI" , "king" -> "KI" , ...
+    #   print nil as "  " so it takes up a two character width on the printed board
+    piece_name == nil ? "  " : piece_name[0..1]
   end
 
   def print_board(piece_locations)
