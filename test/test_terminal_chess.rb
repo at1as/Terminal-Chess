@@ -61,7 +61,7 @@ class TestBoard < MiniTest::Test
 
       all_tiles.each do |num, details|
         if num >= lowerbound && num <= upperbound
-          empty = empty && details.fetch(:type) == "  "
+          empty = empty && details.fetch(:type).nil? # == "  "
         end
       end
 
@@ -73,6 +73,12 @@ class TestBoard < MiniTest::Test
       all_tiles.each do |num, details|
         return details.fetch(:type) if num == index
       end
+    end
+
+    def normalized_tile_name(indexes)
+      # 13 -> A3 , 24 -> B4 , etc
+      first, second = indexes.to_s.split("")
+      Hash[("1".."8").zip("A".."H")][first] + second
     end
   end
 
@@ -98,14 +104,14 @@ class TestBoard < MiniTest::Test
   end
 
   def test_unmoved_pawns_can_move_one_space
-    assert_equal(piece_quantity("pawn"), 16)
+    assert_equal(piece_quantity(:pawn), 16)
 
     @columns.each do |c|
       move_piece("#{c}2", "#{c}3")
       move_piece("#{c}7", "#{c}6")
     end
 
-    assert_equal(16, piece_quantity("pawn"), "There are no longer 16 pawns on the board")
+    assert_equal(16, piece_quantity(:pawn), "There are no longer 16 pawns on the board")
 
     assert_equal(true,  tile_empty(9, 16),  "Pawns failed to move out of their starting positions")
     assert_equal(false, tile_empty(17, 24), "Pawns failed to move forward to positions one tile forward (tiles 17-24)")
@@ -115,14 +121,14 @@ class TestBoard < MiniTest::Test
   end
 
   def test_unmoved_pawns_can_move_two_spaces
-    assert_equal(piece_quantity("pawn"), 16)
+    assert_equal(piece_quantity(:pawn), 16)
 
     @columns.each do |c|
       move_piece("#{c}2", "#{c}4")
       move_piece("#{c}7", "#{c}5")
     end
 
-    assert_equal(16, piece_quantity("pawn"), "There are no longer 16 pawns on the board")
+    assert_equal(16, piece_quantity(:pawn), "There are no longer 16 pawns on the board")
 
     assert_equal(true,  tile_empty(9, 24),  "Pawns are still in their initial starting positions (tiles 9-24)")
     assert_equal(false, tile_empty(25, 32), "Pawns failed to move forward two positions")
@@ -141,6 +147,16 @@ class TestBoard < MiniTest::Test
 
     assert_equal(["A7", "C7"], valid_piece_movement("B6"), "black pawn should only attack diagonally")
     assert_equal(["F2", "H2"], valid_piece_movement("G3"), "red pawn should only attack diagonally")
+  end
+
+  def test_bishops_can_move_over_pawns
+    # Black
+    assert_equal(["A3", "C3"], valid_piece_movement("B1"), "bishop should be able to jump over pawns")
+    assert_equal(["F3", "H3"], valid_piece_movement("G1"), "bishop should be able to jump over pawns")
+
+    # Red
+    assert_equal(["A6", "C6"], valid_piece_movement("B8"), "bishop should be able to jump over pawns")
+    assert_equal(["F6", "H6"], valid_piece_movement("G8"), "bishop should be able to jump over pawns")
   end
 
   def test_king_cannot_castle_through_check_to_right
@@ -259,6 +275,24 @@ class TestBoard < MiniTest::Test
     assert_equal(["D1"], valid_piece_movement("E1"), "King should not be allowed to castle left after left rook has moved")
   end
 
+  def test_king_can_castle_to_left_or_right_when_both_moves_valid
+    move_piece("B1", "A3")  # black knight
+    move_piece("A7", "A6")  # red pawn
+    move_piece("D2", "D4")  # black pawn
+    move_piece("B7", "B6")  # red pawn
+    move_piece("C1", "F4")  # black bishop
+    move_piece("C7", "C6")  # red pawn
+    move_piece("D1", "D3")  # black queen  #=> castle left now valid
+    move_piece("D7", "D6")  # red pawn
+    move_piece("G1", "H3")  # black knight
+    move_piece("E7", "E6")  # red pawn
+    move_piece("G2", "G4")  # black pawn
+    move_piece("F7", "F6")  # red pawn
+    move_piece("F1", "G2")  # black bishop  #=> castle right now valid
+    move_piece("G7", "G6")  # red pawn
+    assert_equal(["C1", "D1", "D2", "F1", "G1"], valid_piece_movement("E1"), "King should be allowed to castle left and right if both moves are valid")
+  end
+
   def test_king_can_kill_check_attacker
     move_piece("A2", "A3")  # Error moving black pawn
     move_piece("A7", "A5")  # Error moving red pawn
@@ -318,7 +352,7 @@ class TestBoard < MiniTest::Test
     move_piece("H4", "H3")
     $stdin = MyIO.new
     move_piece("B7", "C8")
-    assert_equal("queen", type_on_tile(59))
+    assert_equal(:queen, type_on_tile(59))
   end
 
   def test_pawn_cannot_be_promoted_out_of_turn
@@ -329,7 +363,7 @@ class TestBoard < MiniTest::Test
     move_piece("A5", "A6")
     move_piece("H5", "H4")
     move_piece("A6", "B7")
-    $stdin = MyIO.new
+    $stdin = MyIO.new       # send 'Q' to stdin for pawn promotion
     assert_equal(Messages.red_turn, move_piece("B7", "C8"))
   end
 
@@ -343,8 +377,8 @@ class TestBoard < MiniTest::Test
     move_piece("A6", "B7")
     move_piece("E6", "E2")
     assert_equal(Messages.black_in_check, move_piece("B7", "C8"), "Should not be able to promote pawn while it's in check")
-    assert_equal("pawn",   type_on_tile(50))
-    assert_equal("bishop", type_on_tile(59))
+    assert_equal(:pawn,   type_on_tile(50))
+    assert_equal(:bishop, type_on_tile(59))
   end
 
   def test_checkmate_smothered_mate_kings_pawn
@@ -355,17 +389,64 @@ class TestBoard < MiniTest::Test
     move_piece("B1", "C3")
     move_piece("C6", "D4")
     move_piece("G2", "G3")
-    assert_equal(Messages.red_winner, move_piece("D4", "F3"), "Checkmate. Game should be over!")
+    assert_equal(Messages.red_winner, move_piece("D4", "F3"), "Checkmate. Red should be victorious!")
   end
 
   def test_checkmate_fools_mate
     move_piece("F2", "F3")
     move_piece("E7", "E5")
     move_piece("G2", "G4")
-    assert_equal(Messages.red_winner, move_piece("D8", "H4"), "Game should have ended as player is in checkmate")
+    assert_equal(Messages.red_winner, move_piece("D8", "H4"), "Game should have ended as black is in checkmate")
   end
 
-  def test_invalid_moves_not_accepted
-    # TODO: Dynamically generate invalid moves and validate each
+  def test_not_checkmate_when_piece_can_remove_checker
+    # Black Rook should be able to take red bishop that has black king in check
+    # hence piece is not in checkmate
+    skip "Not yet supported"
+    move_piece("F2", "F3")
+    move_piece("E7", "E5")
+    move_piece("G2", "G4")
+    move_piece("A7", "A6")
+    move_piece("H2", "H4")
+    move_piece("A6", "A5")
+    move_piece("H4", "H5")
+    assert_equal(Messages.black_in_check, move_piece("D8", "H4"), "Game should have ended as black is in checkmate")
+    move_piece("H1", "H5")
+    assert_equal(:rook, type_on_tile(40)) #H5
   end
+
+  def test_not_checkmate_when_piece_can_remove_checker
+    skip "Not yet supported"
+  end
+
+  def test_invalid_pawn_moves_not_accepted
+    piece_to_move    = (9.. 16).to_a.sample # piece from black pawn row
+    piece_type       = type_on_tile(piece_to_move)
+    invalid_location = ((1..8).to_a + (33..64).to_a).sample # rows outside of scope
+    location_type    = type_on_tile(invalid_location)
+
+    from = normalized_tile_name(Board.new.get_rowcol_from_index(piece_to_move))
+    to   = normalized_tile_name(Board.new.get_rowcol_from_index(invalid_location))
+
+    move_piece(from, to)
+
+    assert_equal(location_type, type_on_tile(invalid_location))
+    assert_equal(piece_type, type_on_tile(piece_to_move))
+  end
+
+  def test_non_knights_can_not_move_over_populated_pawn_row
+    piece_to_move    = ((1..8).to_a - [2, 7]).sample   # first row without knights
+    piece_type       = type_on_tile(piece_to_move)
+    invalid_location = ((17..64).to_a).sample          # rows outside of scope
+    location_type    = type_on_tile(invalid_location)
+
+    from = normalized_tile_name(Board.new.get_rowcol_from_index(piece_to_move))
+    to   = normalized_tile_name(Board.new.get_rowcol_from_index(invalid_location))
+
+    move_piece(from, to)
+
+    assert_equal(location_type, type_on_tile(invalid_location))
+    assert_equal(piece_type, type_on_tile(piece_to_move))
+  end
+
 end
