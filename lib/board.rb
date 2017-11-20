@@ -92,7 +92,6 @@ class Board
     commit_board_piece_movement
 
     if (winner = player_in_checkmate(@piece_locations))
-      @checkmate = true
       return p Messages.black_winner if winner == :black
       return p Messages.red_winner   if winner == :red
     end
@@ -189,7 +188,7 @@ class Board
   end
 
   def checkmate?(color, manifest)
-    check?(color, manifest, recurse_for_checkmate=true)
+    check?(color, manifest, recurse_for_checkmate=true) && @checkmate
   end
 
   # Return whether the player of a specified color has their king currently in check
@@ -197,11 +196,11 @@ class Board
   # Also, check whether king currently in check, has all of their valid moves within
   # their opponents attack vectors, and therefore are in checkmate (@checkmate)
   def check?(color, proposed_manifest = @piece_locations, recurse_for_checkmate = false)
-    king_loc = []
 
     enemy_attack_vectors  = {}
     player_attack_vectors = {}
 
+    king_loc    = []
     enemy_color = opposing_color(color)
 
     proposed_manifest.each do |piece, details|
@@ -227,43 +226,38 @@ class Board
     king_positions = possible_moves(king_loc, proposed_manifest)
 
     # The King is in the attackable locations by the opposing player
-    if danger_vector.include? king_loc
-      # If all the positions the king piece can move to is also attackable by the opposing player
-      if recurse_for_checkmate && !((king_positions - danger_vector).length == 0)
-        # TODO:
-        # This is flawed. It verified whether the king could move out check
-        # There are two other cases: whether a piece can remove the enemy
-        # And whether the enemy's attack vector can be blocked
+    return false unless danger_vector.include? king_loc
 
-        is_in_check = []
-        player_attack_vectors.each do |piece_index, piece_valid_moves|
-          piece_valid_moves.each do |possible_new_location|
+    # If all the positions the king piece can move to is also attackable by the opposing player
+    if recurse_for_checkmate && ((king_positions - danger_vector).length == 0)
 
-            # Check if board is still in check after piece moves to its new location
-            @new_piece_locations = @piece_locations.clone
-            @new_piece_locations[possible_new_location] = @new_piece_locations[piece_index]
-            @new_piece_locations[piece_index] = {
-              :type   => nil,
-              :number => nil,
-              :color  => nil
-            }
+      is_in_check = []
+      player_attack_vectors.each do |piece_index, piece_valid_moves|
+        piece_valid_moves.each do |possible_new_location|
 
-            is_in_check << check?(color, @new_piece_locations)
-          end
-        end
+          # Check if board is still in check after piece moves to its new location
+          @new_piece_locations = @piece_locations.clone
+          @new_piece_locations[possible_new_location] = @new_piece_locations[piece_index]
+          @new_piece_locations[piece_index] = {
+            :type   => nil,
+            :number => nil,
+            :color  => nil
+          }
 
-        if is_in_check.include?(false)
-          return false
-        else
-          @checkmate = true
+          is_in_check << check?(color, @new_piece_locations)
         end
       end
 
-      true
-    else
-      false # Piece not in check
+      if is_in_check.include?(false)
+        return false
+      else
+        @checkmate = true
+      end
     end
+
+    true
   end
+
 
   def opposing_color(player_color)
     ([:black, :red] - [player_color]).first
@@ -311,6 +305,7 @@ class Board
     place_player_pieces(:red)
   end
 
+
   def setup_empty_tiles
     # Initialize chess board tiles without any pieces
     (1..64).each do |tile_num|
@@ -322,10 +317,30 @@ class Board
     end
   end
 
+
   def place_player_pieces(color)
     # Place pieces on chess board
-    row_offset      = color == :black ? 0 : 56
-    pawn_row_offset = color == :black ? 8 : 48
+    place_first_row(color)
+    place_pawns(color)
+  end
+
+
+  def place_pawns(color)
+    offset = color == :black ? 8 : 48
+
+    (1..8).each do |piece_num|
+      @piece_locations[piece_num + offset] = {
+        :type   => :pawn,
+        :number => piece_num,
+        :color  => color,
+        :moved  => false
+      }
+    end
+  end
+
+
+  def place_first_row(color)
+    row_offset = color == :black ? 0 : 56
 
     @piece_locations[row_offset + 1] = {:type => :rook,   :number => 1, :color => color, :moved => false}
     @piece_locations[row_offset + 2] = {:type => :knight, :number => 1, :color => color, :moved => false}
@@ -335,15 +350,6 @@ class Board
     @piece_locations[row_offset + 6] = {:type => :bishop, :number => 2, :color => color, :moved => false}
     @piece_locations[row_offset + 7] = {:type => :knight, :number => 2, :color => color, :moved => false}
     @piece_locations[row_offset + 8] = {:type => :rook,   :number => 2, :color => color, :moved => false}
-
-    (1..8).each do |piece_num|
-      @piece_locations[piece_num + pawn_row_offset] = {
-        :type   => :pawn,
-        :number => piece_num,
-        :color  => color,
-        :moved  => false
-      }
-    end
   end
 
 end

@@ -402,21 +402,33 @@ class TestBoard < MiniTest::Test
   def test_not_checkmate_when_piece_can_remove_checker
     # Black Rook should be able to take red bishop that has black king in check
     # hence piece is not in checkmate
-    skip "Not yet supported"
-    move_piece("F2", "F3")
-    move_piece("E7", "E5")
-    move_piece("G2", "G4")
-    move_piece("A7", "A6")
-    move_piece("H2", "H4")
-    move_piece("A6", "A5")
-    move_piece("H4", "H5")
-    assert_equal(Messages.black_in_check, move_piece("D8", "H4"), "Game should have ended as black is in checkmate")
-    move_piece("H1", "H5")
-    assert_equal(:rook, type_on_tile(40)) #H5
+    move_piece("F2", "F3")  # black pawn
+    move_piece("E7", "E5")  # red pawn
+    move_piece("G2", "G4")  # black pawn
+    move_piece("A7", "A6")  # red pawn
+    move_piece("H2", "H4")  # black pawn
+    move_piece("A6", "A5")  # red pawn
+    move_piece("H4", "H5")  # black pawn
+    move_piece("D8", "H4")  # Check (from red queen)
+    move_piece("H1", "H4")  # Take queen -> no longer in check
+    assert_equal(:rook, type_on_tile(32)) #H5
   end
 
-  def test_not_checkmate_when_piece_can_remove_checker
-    skip "Not yet supported"
+  def test_not_checkmate_when_piece_can_block_check_path
+    move_piece("F2", "F3")  # black pawn
+    move_piece("E7", "E5")  # red pawn
+    move_piece("G2", "G4")  # black pawn
+    move_piece("A7", "A6")  # red pawn
+    move_piece("H2", "H4")  # black pawn
+    move_piece("A6", "A5")  # red pawn
+    move_piece("H4", "H5")  # black pawn
+    move_piece("A5", "A4")  # red pawn
+    move_piece("H1", "H2")  # black rook (will be able to block check path)
+    move_piece("D8", "H4")  # red queen (black now in check)
+    assert_equal(Messages.black_in_check, move_piece("A2", "A3"), "Should only be able to move out of check for next move")
+    move_piece("H2", "F2")  # black rook (check now blocked)
+    move_piece("H4", "G3")  # red queen
+    move_piece("B1", "A3")  # verify black is no longer in check and can move any piece
   end
 
   def test_invalid_pawn_moves_not_accepted

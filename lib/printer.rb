@@ -14,7 +14,7 @@ module Printer
   COLS ||= ('A'..'H')
 
   @@subrow = 0        # Reference to current row within a cell
-  @@print_count = 1   # Reference to the current cell
+  @@cell_number = 1   # Reference to the current cell
 
 
   def print_header
@@ -52,7 +52,7 @@ module Printer
 
   def clear_all
     # Reset counters and clear terminal
-    @@print_count = 1
+    @@cell_number = 1
     system "clear" or system "cls"
   end
 
@@ -102,8 +102,8 @@ module Printer
 
         # Print cell and next neighboring cell,
         # then loop until 4 pairs of 2 cells have been printed, completing row
-        color      = piece_locations[@@print_count][:color]     || :black
-        next_color = piece_locations[@@print_count + 1][:color] || :black
+        color      = piece_locations[@@cell_number][:color]     || :black
+        next_color = piece_locations[@@cell_number + 1][:color] || :black
 
         # Print two rows at a time as every two rows repeat
         #  alternating tile colors
@@ -118,24 +118,24 @@ module Printer
 
         if @@subrow < 3
           print substitute_pieces(
-            tile_text, @@print_count, color, :white, piece_locations
+            tile_text, @@cell_number, color, :white, piece_locations
           )
           print substitute_pieces(
-            tile_text, @@print_count + 1, next_color, :black, piece_locations
+            tile_text, @@cell_number + 1, next_color, :black, piece_locations
           )
         else
           print substitute_pieces(
-            tile_text, @@print_count, color, :black, piece_locations
+            tile_text, @@cell_number, color, :black, piece_locations
           )
           print substitute_pieces(
-            tile_text, @@print_count + 1, next_color, :white, piece_locations
+            tile_text, @@cell_number + 1, next_color, :white, piece_locations
           )
         end
 
         if tile_text.include? "XX"
-          # Incremenet print_count
-          # unless last cell is being printed, to avoid an out of range error
-          @@print_count += 2 unless @@print_count == 63
+          # Incremenet cell_number unless last cell is being printed
+          # to avoid an out of range error
+          @@cell_number += 2 unless @@cell_number == 63
         end
       end
 
