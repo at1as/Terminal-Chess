@@ -1,0 +1,71 @@
+require 'em-websocket'
+
+EventMachine.run do
+
+  clients = []
+  game_ongoing = false
+
+  EM::WebSocket.start(:host => '0.0.0.0', :port => '4567') do |ws|
+    
+    ws.onopen do |handshake|
+      p [:open, handshake]
+      if @game_ongoing 
+        ws.send "Game already in progress"
+        #ws.close
+      end
+        
+      puts "Now connected to client"
+      
+      if clients.length == 0
+        puts "Waiting for second client"
+        clients << ws
+        ws.send "INFO Now connected to #{handshake.path}"
+        ws.send "INFO Awaiting second player..."
+      elsif clients.length == 1
+        clients << ws
+        puts "Starting Game..."
+        ws.send "INFO: Now connected to server at #{handshake.path}"
+
+        clients.each_with_index do |client, idx|
+          client.send "INFO: Connected to remote player"
+          client.send "SETUP: You are player #{idx+1}"
+        end
+      end
+    end
+
+    ws.onmessage do |msg|
+      puts "Received #{msg}"
+      opposing_player = (clients - [ws]).first
+
+      # Send opposing player the new move, echo message back to sender as confirmation
+      opposing_player.send msg
+      #ws.send msg
+      # Send opposing player the new move, echo message back to sender as confirmation
+      #@clients.each do |client|
+      #  client.send msg
+      #end
+    end
+
+    ws.onerror do |err|
+      puts "ERROR #{err}"
+    end
+
+    ws.onclose do
+      clients.each do |client|
+        client.send "INFO: Player has left the game"
+      end
+
+      puts "Client disconnected"
+
+      clients = []
+      game_ongoing = false
+    end
+
+    #EventMachine::PeriodicTimer.new(30) do
+    #  clients.each do |client|
+    #    client.send "###keep-alive###"
+    #  end
+    #end
+  end
+end
+
