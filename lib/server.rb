@@ -11,16 +11,17 @@ EventMachine.run do
       p [:open, handshake]
       if @game_ongoing 
         ws.send "Game already in progress"
-        #ws.close
+        ws.close
+      else
+        puts "Now connected to client"
       end
-        
-      puts "Now connected to client"
       
       if clients.length == 0
         puts "Waiting for second client"
         clients << ws
         ws.send "INFO Now connected to #{handshake.path}"
         ws.send "INFO Awaiting second player..."
+      
       elsif clients.length == 1
         clients << ws
         puts "Starting Game..."
@@ -34,20 +35,15 @@ EventMachine.run do
     end
 
     ws.onmessage do |msg|
-      puts "Received #{msg}"
+      p [:message, msg]
       opposing_player = (clients - [ws]).first
 
-      # Send opposing player the new move, echo message back to sender as confirmation
+      # Send opposing player the new move
       opposing_player.send msg
-      #ws.send msg
-      # Send opposing player the new move, echo message back to sender as confirmation
-      #@clients.each do |client|
-      #  client.send msg
-      #end
     end
 
     ws.onerror do |err|
-      puts "ERROR #{err}"
+      p [:error, err]
     end
 
     ws.onclose do
@@ -55,17 +51,13 @@ EventMachine.run do
         client.send "INFO: Player has left the game"
       end
 
-      puts "Client disconnected"
+      p [:close, "Client disconnected"]
 
+      # End session for all clients
       clients = []
       game_ongoing = false
     end
 
-    #EventMachine::PeriodicTimer.new(30) do
-    #  clients.each do |client|
-    #    client.send "###keep-alive###"
-    #  end
-    #end
   end
 end
 

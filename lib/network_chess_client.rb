@@ -10,15 +10,15 @@ require_relative "move.rb"
 require_relative "board.rb"
 
 
-class ChessClient
-  def initialize
+class NetworkChessClient
+  def initialize(ngrok)
     @board = Board.new
     @turn_by_turn_playback = []
     @game_started = false
     @player_num   = nil
     @player_turn  = false
     @messages     = []
-
+    @socket_url   = "ws://#{ngrok}.ngrok.io"
     start_client
   end
 
@@ -27,7 +27,7 @@ class ChessClient
   def start_client
     Thread.new {
       EM.run do
-        ws = Faye::WebSocket::Client.new("ws://8cf6d5ce.ngrok.io")
+        ws = Faye::WebSocket::Client.new(@socket_url)
 
         ws.on :open do
           p [:open]
@@ -52,6 +52,8 @@ class ChessClient
 
         ws.on :close do |e|
           p [:closed, e.code, e.reason]
+          ws = nil
+          EventMachine::stop_event_loop
         end
 
         EventMachine::PeriodicTimer.new(1) do
@@ -93,6 +95,4 @@ class ChessClient
   end
 
 end
-
-ChessClient.new
 
