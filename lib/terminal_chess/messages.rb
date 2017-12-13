@@ -9,6 +9,8 @@ class Messages
   @black_winner   = "Checkmate! Black Player Wins!"
   @invalid        = "Invalid Selection"
 
+  @piece_moved    = "Piece moved"
+
   class << self
     attr_reader(
       :red_turn,
@@ -18,7 +20,8 @@ class Messages
       :red_winner,
       :black_winner,
       :checkmate,
-      :invalid
+      :invalid,
+      :piece_moved
     )
   end
 end

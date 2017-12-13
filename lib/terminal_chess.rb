@@ -2,38 +2,15 @@
 
 $LOAD_PATH << __FILE__ # '.'
 
-require_relative "terminal_chess/version"
-require_relative "printer.rb"
-require_relative "move.rb"
-require_relative "board.rb"
+require_relative 'local_chess_client'
+require_relative 'network_chess_client'
+require_relative 'server'
 
-# Setup
-board = Board.new
-board.display_board
-
-turn_by_turn_playback = []
-
-# Gameplay
-loop do
-
-  if board.checkmate
-    puts "\nTurn by Turn Playback : #{turn_by_turn_playback}\n"
-    exit
-  end
-
-  print "\nPiece to Move [#{board.player_turn.capitalize}]: "
-  from = gets.chomp.upcase
-
-  begin
-    print "Valid destinations: #{board.valid_destinations(from).join(", ")}"
-
-    print "\nLocation: "
-    to = gets.chomp.upcase
-    board.move(from, to)
-
-  rescue Exception => e
-    puts "Invalid selection #{e if !ENV["DEV"].nil?}"
-  else
-    turn_by_turn_playback << [from, to]
-  end
+if ENV["SERVER"]
+  ChessServer.new
+elsif ENV["NGROK"]
+  NetworkChessClient.new(ENV["NGROK"])
+else
+  LocalChessClient.new
 end
+
