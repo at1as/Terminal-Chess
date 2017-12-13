@@ -8,7 +8,7 @@ A lightweight two-player chess game for the Terminal, written in Ruby
  
 ### Installing
 
-The easiest way to use terminal_chess is to install it via the [Rubygem](https://rubygems.org/gems/terminal_chess). Note that the Gem is *way* out of date when compared to the repo
+The easiest way to use terminal_chess is to install it via the [Rubygem](https://rubygems.org/gems/terminal_chess).
 
 Otherwise, clone this repo directly and run:
 
@@ -17,7 +17,8 @@ Otherwise, clone this repo directly and run:
 $ git clone git@github.com:at1as/Terminal-Chess.git
 $ chmod +x lib/terminal_chess.rb
 
-# Install Dependencies. Only dependency is the colorize gem
+# Install Dependencies. Only dependency for local use is the colorize gem
+# however there are various requirements for a websocket client and server in order to play remotely
 $ bundle install
 ```
 
@@ -28,19 +29,22 @@ $ bundle install
 In this mode, the game will launch in Terminal and allow the player to make moves for both sides of the board
 
 ```
-# Run program in terminal
-
+# Run program in terminal (source)
 $ ruby lib/terminal_chess.rb
+
+# Run program in terminal (gem)
+$ gem install terminal_chess
+$ terminal_chess
 ```
 
 #### Multiplayer
 
-Terminal Chess can connect to an opponent using websockets over ngrok. The requires first starting the server:
+Terminal Chess can connect to an opponent using websockets over ngrok. The requires first starting the server. While this resides 
 
 ```
 # The webserver must be running either on one of the players machines
 # Or somewhere else. This will need to be running before either client can connect
-$ lib/server.rb 
+$ SERVER=start lib/terminal_chess.rb 
 
 # The host running the server will need to tunnel the connection through ngrok
 # on the free plan the URL will change every time ngrok is launched
@@ -54,7 +58,10 @@ And then the client can connect via the NGROK environment variable. if this envi
 
 ```
 # Replace the NGROK enviroment variable with whatever URL the ngrok server returned
+# -- from Soure:
 $ NGROK=9cf13f5 ruby lib/terminal_chess.rb
+# -- OR from Gem:
+$ NGROK=9cf13f5 terminal_chess
 
 # => [:message, "INFO: Awaiting second player..."]
 ```
@@ -82,6 +89,6 @@ $ bundle exec rake test --trace
 * Neither player can currently be automated
 
 ### TODO:
-* Update Gem to reflect the last two years' repo changes...
-* Automate one of two players (note: tried this. Not easy to make it competent)
-* Switch written Chess pieces to unicode characters (note: tried this. Didn't look great)
+* Automate one of two players (note: tried and failed at this. Not easy to make it competent)
+* Switch written Chess pieces to unicode characters (note: tried this. Didn't look great unless text size was massive)
+* Player 2 must play an upside down chessboard. Reorient so it's the same for both players

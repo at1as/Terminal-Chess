@@ -6,7 +6,7 @@ require 'terminal_chess/version'
 Gem::Specification.new do |s|
   s.name        = 'terminal_chess'
   s.version     = TerminalChess::VERSION
-  s.date        = '2015-03-03'
+  s.date        = '2017-12-12'
   s.summary     = "Chess game playable via the terminal"
   s.description = "Two player chess game through the terminal"
   s.authors     = ["Jason Willems"]
