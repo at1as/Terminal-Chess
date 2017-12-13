@@ -65,7 +65,6 @@ class NetworkChessClient
           piece_moved = local_move
           if piece_moved
             @player_turn = false
-            p @turn_by_turn_playback
             ws.send "MOVE: #{@turn_by_turn_playback.last[0]}, #{@turn_by_turn_playback.last[1]}"
             puts "Awaiting remote player move"
           end
