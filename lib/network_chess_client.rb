@@ -65,6 +65,7 @@ class NetworkChessClient
           piece_moved = local_move
           if piece_moved
             @player_turn = false
+            p @turn_by_turn_playback
             ws.send "MOVE: #{@turn_by_turn_playback.last[0]}, #{@turn_by_turn_playback.last[1]}"
             puts "Awaiting remote player move"
           end
@@ -90,7 +91,7 @@ class NetworkChessClient
       to = gets.chomp.upcase
       moved = @board.move(from, to)
       
-      local_move() unless moved == Messages.piece_moved
+      return local_move() unless moved == Messages.piece_moved
 
     rescue Exception => e
       puts "Invalid selection #{e if !ENV["DEV"].nil?}"
