@@ -5,6 +5,7 @@ require 'eventmachine'
 require 'faye/websocket'
 
 require_relative "terminal_chess/version"
+require_relative "terminal_chess/messages"
 require_relative "printer.rb"
 require_relative "move.rb"
 require_relative "board.rb"
@@ -40,6 +41,8 @@ class NetworkChessClient
             @player_num   = msg.data.split(' ').last.strip.to_i
             @player_turn  = true if @player_num == 1
             @game_started = true
+
+            p [:local, "Awaiting opponent move"] if @player_num == 2
           end
 
           if msg.data.match "MOVE: [a-zA-Z][0-9], [a-zA-Z][0-9]"
@@ -63,6 +66,7 @@ class NetworkChessClient
           if piece_moved
             @player_turn = false
             ws.send "MOVE: #{@turn_by_turn_playback.last[0]}, #{@turn_by_turn_playback.last[1]}"
+            puts "Awaiting remote player move"
           end
         end
       end
@@ -84,7 +88,9 @@ class NetworkChessClient
 
       print "\nLocation: "
       to = gets.chomp.upcase
-      @board.move(from, to)
+      moved = @board.move(from, to)
+      
+      local_move() unless moved == Messages.piece_moved
 
     rescue Exception => e
       puts "Invalid selection #{e if !ENV["DEV"].nil?}"

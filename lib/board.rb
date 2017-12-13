@@ -95,6 +95,8 @@ class Board
       return p Messages.black_winner if winner == :black
       return p Messages.red_winner   if winner == :red
     end
+
+    return p Messages.piece_moved
   end
 
 
