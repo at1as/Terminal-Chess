@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    terminal_chess (0.2.0)
+    terminal_chess (0.2.1)
       colorize
       em-websocket
       eventmachine
