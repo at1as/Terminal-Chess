@@ -23,7 +23,7 @@ module TerminalChess
           end
 
           ws.onerror do
-            handle_error()
+            handle_error
             clients = handle_close(clients)
             game_ongoing = false
           end
@@ -73,7 +73,7 @@ module TerminalChess
       opposing_player.send msg
     end
 
-    def handle_error()
+    def handle_error
       p [:error]
     end
 

@@ -3,6 +3,11 @@
 
 module TerminalChess
   module Printer
+    class << self
+      attr_accessor :subrow
+      attr_accessor :cell_number
+    end
+
     # TODO : Replace text pieces with unicode symbols
     PIECE_TO_UNICODE_MAPPING ||= {
       "pa": "♙",
@@ -14,8 +19,8 @@ module TerminalChess
     }.freeze
     COLS ||= ('A'..'H')
 
-    @@subrow = 0        # Reference to current row within a cell
-    @@cell_number = 1   # Reference to the current cell
+    Printer.subrow = 0        # Reference to current row within a cell
+    Printer.cell_number = 1   # Reference to the current cell
 
     def print_header
       # Print chess board Header (Title and then Column Labels A to H)
@@ -45,12 +50,12 @@ module TerminalChess
 
     def print_end_of_row(row_num)
       # Print row number 1...8 at end of each row
-      print " #{row_num}" if (@@subrow == 1 || @@subrow == 4) && row_num
+      print " #{row_num}" if (Printer.subrow == 1 || Printer.subrow == 4) && row_num
     end
 
     def clear_all
       # Reset counters and clear terminal
-      @@cell_number = 1
+      Printer.cell_number = 1
       system("clear") or system("cls")
     end
 
@@ -97,8 +102,8 @@ module TerminalChess
         4.times do
           # Print cell and next neighboring cell,
           # then loop until 4 pairs of 2 cells have been printed, completing row
-          color      = piece_locations[@@cell_number][:color]     || :black
-          next_color = piece_locations[@@cell_number + 1][:color] || :black
+          color      = piece_locations[Printer.cell_number][:color]     || :black
+          next_color = piece_locations[Printer.cell_number + 1][:color] || :black
 
           # Print two rows at a time as every two rows repeat
           #  alternating tile colors
@@ -111,19 +116,19 @@ module TerminalChess
           #   |###   ###   ###   ###   | -> subrow 5
           #
 
-          if @@subrow < 3
+          if Printer.subrow < 3
             print substitute_pieces(
-              tile_text, @@cell_number, color, :white, piece_locations
+              tile_text, Printer.cell_number, color, :white, piece_locations
             )
             print substitute_pieces(
-              tile_text, @@cell_number + 1, next_color, :black, piece_locations
+              tile_text, Printer.cell_number + 1, next_color, :black, piece_locations
             )
           else
             print substitute_pieces(
-              tile_text, @@cell_number, color, :black, piece_locations
+              tile_text, Printer.cell_number, color, :black, piece_locations
             )
             print substitute_pieces(
-              tile_text, @@cell_number + 1, next_color, :white, piece_locations
+              tile_text, Printer.cell_number + 1, next_color, :white, piece_locations
             )
           end
 
@@ -131,15 +136,15 @@ module TerminalChess
           
           # Incremenet cell_number unless last cell is being printed
           # to avoid an out of range error
-          @@cell_number += 2 unless @@cell_number == 63
+          Printer.cell_number += 2 unless Printer.cell_number == 63
         end
 
         print_end_of_row(row_num)
 
         # Incriment row index.
         # Reset once n reaches 6 (i.e., two complete cell rows have been printed - the pattern to repeat)
-        @@subrow += 1
-        @@subrow  = 0 if @@subrow == 6
+        Printer.subrow += 1
+        Printer.subrow  = 0 if Printer.subrow == 6
         puts
       end
     end

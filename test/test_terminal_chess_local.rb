@@ -29,7 +29,7 @@ class TestBoard < MiniTest::Test
     @board.display_board
     @messages = TerminalChess::Messages
   end
-    
+
   def valid_piece_movement(from)
     @board.valid_destinations(from)
   end

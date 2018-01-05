@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Helpers
   class MyIO
     # Send 'Q' to stdin for piece promotion

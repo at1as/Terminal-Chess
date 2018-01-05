@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-#$LOAD_PATH << # '.'
-
 require "terminal_chess/board"
 require "terminal_chess/move"
 require "terminal_chess/printer"

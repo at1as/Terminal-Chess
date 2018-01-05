@@ -3,11 +3,18 @@
 module TerminalChess
   # Determines valid and invalid for each piece on the board
   module Move
+    class << self
+      attr_accessor :pieces
+      attr_accessor :color
+      attr_accessor :type
+      attr_accessor :enemy_color
+    end
+
     def constants(piece_mapping, color, piece)
-      @@pieces = piece_mapping
-      @@color  = color
-      @@type   = piece
-      @@enemy_color = (%i[black red] - [color]).first
+      Move.pieces = piece_mapping
+      Move.color  = color
+      Move.type   = piece
+      Move.enemy_color = (%i[black red] - [color]).first
     end
 
     # Calls methods below to return a list of positions which are valid moves
@@ -55,19 +62,19 @@ module TerminalChess
 
       # Piece color defines direction of travel. Enemy presence defines
       # the validity of diagonal movements
-      if @@color == :red
+      if Move.color == :red
         valid << (p1 - 8) if unoccupied?(p1 - 8)
-        valid << (p1 - 7) if piece_color(p1 - 7) == @@enemy_color && col < 8
-        valid << (p1 - 9) if piece_color(p1 - 9) == @@enemy_color && col > 1
+        valid << (p1 - 7) if piece_color(p1 - 7) == Move.enemy_color && col < 8
+        valid << (p1 - 9) if piece_color(p1 - 9) == Move.enemy_color && col > 1
         # Only if the pieces is unmoved, can it move forward two rows
-        valid << (p1 - 16) if !@@pieces[p1][:moved] && unoccupied?(p1 - 8) && unoccupied?(p1 - 16)
+        valid << (p1 - 16) if !Move.pieces[p1][:moved] && unoccupied?(p1 - 8) && unoccupied?(p1 - 16)
 
-      elsif @@color == :black
+      elsif Move.color == :black
 
         valid << (p1 + 8) if unoccupied?(p1 + 8)
-        valid << (p1 + 7) if piece_color(p1 + 7) == @@enemy_color && col > 1
-        valid << (p1 + 9) if piece_color(p1 + 9) == @@enemy_color && col < 8
-        valid << (p1 + 16) if !@@pieces[p1][:moved] && unoccupied?(p1 + 8) && unoccupied?(p1 + 16)
+        valid << (p1 + 7) if piece_color(p1 + 7) == Move.enemy_color && col > 1
+        valid << (p1 + 9) if piece_color(p1 + 9) == Move.enemy_color && col < 8
+        valid << (p1 + 16) if !Move.pieces[p1][:moved] && unoccupied?(p1 + 8) && unoccupied?(p1 + 16)
       end
 
       valid
@@ -94,7 +101,7 @@ module TerminalChess
       # All possible moves for the knight based on board boundaries will added
       # This iterator filters for friendly fire, and removes indexes pointing to same color pices
       valid.each do |pos|
-        valid_moves_no_friendly_fire << pos unless piece_color(pos) == @@color
+        valid_moves_no_friendly_fire << pos unless piece_color(pos) == Move.color
       end
 
       valid_moves_no_friendly_fire
@@ -125,7 +132,7 @@ module TerminalChess
           # Valid move is piece is an enemy, but then no subsequent tiles are attackable
           # if the piece is not an enemy, it's not added as a valid move, and no subsequent tiles are attackable
           # This function doesn't filter out the king from a valid enemy, but the Board class will drop King indexes
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
 
           break
         end
@@ -137,7 +144,7 @@ module TerminalChess
         if unoccupied?(next_pos)
           valid << next_pos
         else
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
           break
         end
       end
@@ -148,7 +155,7 @@ module TerminalChess
         if unoccupied?(next_pos)
           valid << next_pos
         else
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
           break
         end
       end
@@ -159,7 +166,7 @@ module TerminalChess
         if unoccupied?(next_pos)
           valid << next_pos
         else
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
           break
         end
       end
@@ -190,7 +197,7 @@ module TerminalChess
           # Valid move is piece is an enemy, but then no subsequent tiles are attackable
           # if the piece is not an enemy, it's not added as a valid move, and no subsequent tiles are attackable
           # This function doesn't filter out the king from a valid enemy, but the Board class will drop King indexes
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
           break
         end
       end
@@ -201,7 +208,7 @@ module TerminalChess
         if unoccupied?(next_pos)
           valid << next_pos
         else
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
           break
         end
       end
@@ -212,7 +219,7 @@ module TerminalChess
         if unoccupied?(next_pos)
           valid << next_pos
         else
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
           break
         end
       end
@@ -223,7 +230,7 @@ module TerminalChess
         if unoccupied?(next_pos)
           valid << next_pos
         else
-          valid << next_pos if piece_color(next_pos) == @@enemy_color
+          valid << next_pos if piece_color(next_pos) == Move.enemy_color
           break
         end
       end
@@ -237,17 +244,17 @@ module TerminalChess
       dangerous_tiles = attack_vectors
 
       # King may never have moved
-      return valid unless [5, 61].include?(index) && @@pieces[index][:moved] == false
+      return valid unless [5, 61].include?(index) && Move.pieces[index][:moved] == false
 
       # Ensure empty space between a King and a Rook
       #if (1..3).all? { |i| unoccupied?(index - i) } && @pieces[index - 4][:moved] == false
       if unoccupied?(index - 1) && unoccupied?(index - 2) && unoccupied?(index - 3) && 
-          @@pieces[index - 4][:moved] == false
+          Move.pieces[index - 4][:moved] == false
         # Ensure king does not move through check or into check, and then add its castle position
         valid << index - 2 if !dangerous_tiles.include?(index - 1) && !dangerous_tiles.include?(index - 2)
       end
 
-      if unoccupied?(index + 1) && unoccupied?(index + 2) && @@pieces[index + 3][:moved] == false
+      if unoccupied?(index + 1) && unoccupied?(index + 2) && Move.pieces[index + 3][:moved] == false
         valid << index + 2 if !dangerous_tiles.include?(index + 1) && !dangerous_tiles.include?(index + 2)
       end
 
@@ -256,22 +263,22 @@ module TerminalChess
 
     # Check if board tile currently has a piece
     def unoccupied?(index)
-      @@pieces[index][:color].nil?
+      Move.pieces[index][:color].nil?
     end
 
     # Return true if the piece has moved before
     def moved?(index)
-      @@pieces[index][:moved] ? true : false
+      Move.pieces[index][:moved] ? true : false
     end
 
     # Return piece color ("red" or "black") from index (1 - 64)
     def piece_color(index)
-      @@pieces[index][:color]
+      Move.pieces[index][:color]
     end
 
     # Method used when moving, to verify the piece at index (1 - 64) is not of type "king"
     def not_king(index)
-      @@piece_locations[index][:type] == :king
+      @piece_locations[index][:type] == :king
     end
 
     # Obtain chess board row number (1 + 8) from an index (1 - 64)

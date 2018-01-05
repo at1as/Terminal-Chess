@@ -5,12 +5,11 @@ require 'minitest/autorun'
 require './lib/terminal_chess/server'
 
 class TestServer < MiniTest::Test
-
-  def setup_server(&actions)
+  def setup_server(&_actions)
     sleep 2
     @server = Thread.new { TerminalChess::ChessServer.new }
     sleep 2
-    actions.call
+    yield
     teardown_server
   end
 
@@ -21,11 +20,11 @@ class TestServer < MiniTest::Test
   # TODO:
   # - The sleep intervals are to wait for data to be received
   #   These should be in some sort of wait_for loop that times out instead
-  # - Add tests that move pieces and verify movements between clients 
+  # - Add tests that move pieces and verify movements between clients
   # - Investigate better way to test websockets (library, etc)
 
   def test_connect
-    setup_server do 
+    setup_server do
       ws = Faye::WebSocket::Client.new("ws://127.0.0.1:4567")
       opened = false
 
@@ -35,7 +34,6 @@ class TestServer < MiniTest::Test
 
       sleep 1
       assert_equal(true, opened)
-      ws = nil
     end
   end
 
@@ -52,10 +50,9 @@ class TestServer < MiniTest::Test
 
       sleep 2
       assert_equal(messages, expected)
-      ws = nil
     end
   end
-  
+
   def test_two_player_connect_messages_received
     setup_server do
       ws1 = Faye::WebSocket::Client.new("ws://127.0.0.1:4567")
@@ -70,7 +67,7 @@ class TestServer < MiniTest::Test
         "INFO: Connected to remote player",
         "SETUP: You are player 1"
       ]
-      
+
       expected_messages_player2 = [
         "INFO: Player now connected to server at /",
         "INFO: Connected to remote player",
@@ -83,13 +80,10 @@ class TestServer < MiniTest::Test
       ws2.on :message do |msg|
         messages_player2 << msg.data
       end
-    
+
       sleep 2
       assert_equal(messages_player1, expected_messages_player1)
       assert_equal(messages_player2, expected_messages_player2)
-
-      ws1 = nil
-      ws2 = nil
     end
   end
 end
