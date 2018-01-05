@@ -1,4 +1,3 @@
-# frozen_string_literal: true
 require 'em-websocket'
 
 module TerminalChess
@@ -16,15 +15,17 @@ module TerminalChess
 
         EM::WebSocket.start(host: '0.0.0.0', port: '4567') do |ws|
           ws.onopen do |handshake|
-            clients = handle_open(clients, handshake, ws)
+            clients = handle_open(clients, handshake, ws, game_ongoing)
           end
 
           ws.onmessage do |msg|
             handle_msg(msg, clients, ws)
           end
 
-          ws.onerror do |err|
-            handle_error(err)
+          ws.onerror do
+            handle_error()
+            clients = handle_close(clients)
+            game_ongoing = false
           end
 
           ws.onclose do
@@ -35,7 +36,7 @@ module TerminalChess
       end
     end
 
-    def handle_open(clients, handshake, ws)
+    def handle_open(clients, handshake, ws, game_ongoing)
       p [:open]
       if game_ongoing
         ws.send "Game already in progress"
@@ -72,11 +73,11 @@ module TerminalChess
       opposing_player.send msg
     end
 
-    def handle_error(err)
-      p [:error, err]
+    def handle_error()
+      p [:error]
     end
 
-    def handle_close
+    def handle_close(clients)
       clients.each do |client|
         client.send "INFO: Player has left the game"
         client.close unless client.state == :closed
